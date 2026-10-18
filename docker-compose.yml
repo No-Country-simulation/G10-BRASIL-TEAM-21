@@ -1,0 +1,84 @@
+# adaptai — stack local (ADR-0015). Suba com: docker compose up --build
+# Pré-requisito: copiar .env.example para .env e preencher as variáveis obrigatórias.
+name: adaptai
+
+services:
+  db:
+    # Imagem oficial do pgvector sobre PostgreSQL 16. Confirmar a tag e, se for usar a VM Arm
+    # da OCI, o suporte a arm64 no spike da semana 1 (US-007).
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Sem "ports": o banco não é exposto fora da rede do Compose (ADR-0015).
+    # Para inspecionar: docker compose exec db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      adaptai_ENV: ${adaptai_ENV:-dev}
+      adaptai_MODO_DEMO: ${adaptai_MODO_DEMO:-false}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      JWT_EXPIRA_MIN: ${JWT_EXPIRA_MIN:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      LOCAL_STORAGE_DIR: ${LOCAL_STORAGE_DIR:-.local-storage}
+      OCI_REGION: ${OCI_REGION:-}
+      OCI_TENANCY: ${OCI_TENANCY:-}
+      OCI_USER: ${OCI_USER:-}
+      OCI_FINGERPRINT: ${OCI_FINGERPRINT:-}
+      OCI_KEY_FILE: ${OCI_KEY_FILE:-}
+      OCI_NAMESPACE: ${OCI_NAMESPACE:-}
+      OCI_BUCKET: ${OCI_BUCKET:-adaptai-conteudos-educativos}
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-}
+    volumes:
+      - local_storage:/srv/.local-storage
+      # Com STORAGE_BACKEND=oci, monte a chave da API (arquivo fora do Git, pasta "secrets/"):
+      # - ./secrets/oci_api_key.pem:/run/secrets/oci_api_key.pem:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Front-end React + Vite (ADR-0012). Só sobe se frontend/ tiver package.json e package-lock.json:
+  # commite o projeto Vite junto com este serviço, senão "docker compose up --build" falha no build.
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    environment:
+      # Lido pelo navegador, então aponta para a porta publicada no host, não para o nome do serviço.
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+
+volumes:
+  pgdata:
+  local_storage:
