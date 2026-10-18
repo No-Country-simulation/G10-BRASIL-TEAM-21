@@ -1,0 +1,40 @@
+# ---------- Segredos (nunca versionar) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.oci/
+secrets/
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# ---------- Node / front-end ----------
+node_modules/
+.vite/
+.next/
+.parcel-cache/
+coverage/
+
+# ---------- Dados locais ----------
+.local-storage/
+*.dump
+
+# ---------- Editor e sistema ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

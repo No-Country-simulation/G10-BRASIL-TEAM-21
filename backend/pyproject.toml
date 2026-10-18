@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptai-backend"
+version = "0.1.0"
+description = "API do adaptai (Hackathon ONE G10)"
+requires-python = ">=3.11"
+
+# Faixas de versão, não versões travadas: o ambiente de criação deste esqueleto não conseguiu
+# resolver pacotes. Depois do primeiro "pip install" no time, gere e versione um arquivo de
+# travamento (ex.: pip-compile ou uv lock) e registre a escolha no PR. Ver docs/07, seção 2.
+# Bibliotecas de RAG e agentes (LangChain, LangGraph, PyPDF, oci) entram com as histórias
+# US-010 em diante, depois do spike do LLM (ADR-0011).
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "pydantic>=2.8,<3",
+  "pydantic-settings>=2.4,<3",
+  "sqlalchemy>=2.0,<3",
+  "alembic>=1.13,<2",
+  "psycopg[binary]>=3.2,<4",
+  "pgvector>=0.3,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "httpx>=0.27,<1",
+  "ruff>=0.6,<1",
+]
+
+# O código roda a partir da pasta (uvicorn app.main:app), não é instalado como pacote.
+[tool.setuptools]
+py-modules = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

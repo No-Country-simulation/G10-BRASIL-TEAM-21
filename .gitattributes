@@ -1,0 +1,10 @@
+# Normaliza finais de linha: o time usa Windows e Linux/macOS e os containers rodam Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
