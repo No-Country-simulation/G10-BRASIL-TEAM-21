@@ -228,7 +228,7 @@ jobs:
         run: docker compose down -v
 
   ci-ok:
-    name: CI OK 
+    name: CI OK
     if: always()
     needs:
       - changes
