@@ -119,6 +119,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      # Necessário ajustar o driver/valores conforme o backend.
       AdaptAI_ENV: dev
       DATABASE_URL: postgresql+psycopg://adaptai:adaptai_ci@localhost:5432/adaptai_test
       JWT_SECRET: segredo-somente-para-ci
@@ -139,7 +140,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Migrações · cabeça única do Alembic
-        if: hashFiles('backend/alembic.ini') != ''
+        if: hashFiles('backend/migrations/env.py') != ''
         run: |
           heads=$(alembic heads | grep -c '(head)' || true)
           if [ "$heads" -ne 1 ]; then
@@ -149,6 +150,7 @@ jobs:
           fi
 
       - name: Migrações · upgrade, downgrade e upgrade (US-008)
+        if: hashFiles('backend/migrations/env.py') != ''
         run: |
           alembic upgrade head
           alembic downgrade base
