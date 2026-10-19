@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches: [homolog, main]
+    tags: ["gate-*", "entrega-*", "v*"]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Fazer deploy na VM OCI após publicar as imagens"
+        type: boolean
+        default: false
+      ref_deploy:
+        description: "Tag ou branch a implantar na VM"
+        type: string
+        default: main
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  imagens:
+    name: Imagem · ${{ matrix.servico }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        servico: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.servico }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.servico }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.servico }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servico }}
+
+  deploy-oci:
+    name: Deploy na VM OCI (opcional)
+    needs: imagens
+    # Só roda manualmente e se habilitar (Settings > Variables: DEPLOY_ENABLED=true)
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: oci-vm
+    steps:
+      - name: Preparar SSH
+        env:
+          SSH_KEY: ${{ secrets.OCI_VM_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OCI_VM_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Atualizar e subir o Compose na VM
+        env:
+          HOST: ${{ secrets.OCI_VM_HOST }}
+          USUARIO: ${{ secrets.OCI_VM_USER }}
+          DIR: ${{ vars.OCI_VM_DIR }}
+          REF: ${{ inputs.ref_deploy }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$USUARIO@$HOST" bash -s <<EOF
+            set -euo pipefail
+            cd "$DIR"
+            git fetch --all --tags --prune
+            git checkout "$REF"
+            git pull --ff-only || true
+            # O .env da VM é criado à mão uma vez e nunca versionado (RNF-02)
+            docker compose up -d --build
+            docker compose ps
+          EOF

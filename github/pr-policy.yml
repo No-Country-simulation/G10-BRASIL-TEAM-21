@@ -1,0 +1,71 @@
+name: Política de PR
+
+on:
+  pull_request:
+    branches: [dev, homolog, main]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  politica:
+    name: Política de PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar origem e destino
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          work='^(feat|fix|docs|test|refactor|chore)/(back|front|agent|docs|infra)-[a-z0-9]+(-[a-z0-9]+)*$'
+          hotfix='^hotfix/[a-z0-9]+(-[a-z0-9]+)*$'
+
+          case "$BASE" in
+            main)
+              if [[ "$HEAD" == "homolog" || "$HEAD" =~ $hotfix ]]; then exit 0; fi
+              echo "::error::PR para main só pode vir de 'homolog' (ou 'hotfix/*'). Origem: $HEAD"
+              exit 1 ;;
+            homolog)
+              # main -> homolog é a volta do hotfix (doc 07, 5.2)
+              if [[ "$HEAD" == "dev" || "$HEAD" == "main" || "$HEAD" =~ $hotfix ]]; then exit 0; fi
+              echo "::error::PR para homolog só pode vir de 'dev' (ou da volta de hotfix). Origem: $HEAD"
+              exit 1 ;;
+            dev)
+              # homolog/main -> dev é a volta do hotfix
+              if [[ "$HEAD" == "homolog" || "$HEAD" == "main" || "$HEAD" =~ $hotfix || "$HEAD" =~ $work ]]; then exit 0; fi
+              echo "::error::Nome de branch fora do padrão '<tipo>/<area>-<assunto>': $HEAD"
+              echo "Tipos: feat|fix|docs|test|refactor|chore · Áreas: back|front|agent|docs|infra"
+              echo "Exemplo: feat/back-upload-documento"
+              exit 1 ;;
+          esac
+
+      - name: Validar título (Conventional Commits em PT-BR)
+        if: github.base_ref == 'dev' && github.head_ref != 'homolog' && github.head_ref != 'main'
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            test
+            refactor
+            chore
+          scopes: |
+            rag
+            agents
+            api
+            auth
+            xp
+            storage
+            db
+            front
+            docs
+            ci
+            infra
+          requireScope: false
+          subjectPattern: ^.{1,72}$
+          subjectPatternError: O resumo do título deve ter de 1 a 72 caracteres.
