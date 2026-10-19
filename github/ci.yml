@@ -1,0 +1,246 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, homolog, main]
+  push:
+    branches: [dev, homolog, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "22"
+
+jobs:
+  changes:
+    name: Detectar mudanças
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'docker-compose.yml'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
+  segredos:
+    name: Segredos e arquivos proibidos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bloquear .env e chaves versionados (RNF-02)
+        run: |
+          proibidos=$(git ls-files | grep -E '(^|/)\.env$|\.pem$|(^|/)\.env\.(local|prod|production)$' || true)
+          if [ -n "$proibidos" ]; then
+            echo "::error::Arquivos sensíveis versionados:"
+            echo "$proibidos"
+            echo "Revogue e gere outro segredo; apagar do histórico não basta."
+            exit 1
+          fi
+
+      - name: Varredura de segredos (gitleaks)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            detect --source /repo --redact --no-banner -v
+
+  compose-config:
+    name: Validar docker-compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker compose config
+        run: |
+          cp .env.example .env
+          docker compose config -q
+
+  backend-lint:
+    name: Backend · lint
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Instalar dependências
+        run: pip install -e ".[dev]"
+      - name: ruff (lint)
+        run: ruff check .
+      - name: ruff (formatação)
+        run: ruff format --check .
+
+  backend-test:
+    name: Backend · testes
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: adaptai
+          POSTGRES_PASSWORD: adaptai_ci
+          POSTGRES_DB: adaptai_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U adaptai -d adaptai_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AdaptAI_ENV: dev
+      DATABASE_URL: postgresql+psycopg://adaptai:adaptai_ci@localhost:5432/adaptai_test
+      JWT_SECRET: segredo-somente-para-ci
+      JWT_EXPIRA_MIN: "60"
+      STORAGE_BACKEND: local
+      LLM_PROVIDER: fake
+      LLM_API_KEY: nao-usada-em-ci
+      EMBEDDING_MODEL: fake
+      EMBEDDING_DIM: "8"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Instalar dependências
+        run: pip install -e ".[dev]"
+
+      - name: Migrações · cabeça única do Alembic
+        run: |
+          heads=$(alembic heads | grep -c '(head)' || true)
+          if [ "$heads" -ne 1 ]; then
+            echo "::error::Há $heads heads do Alembic; deve haver exatamente 1 (faça merge das migrações)."
+            alembic heads
+            exit 1
+          fi
+
+      - name: Migrações · upgrade, downgrade e upgrade (US-008)
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+
+      - name: pytest
+        run: pytest -q --junitxml=pytest-report.xml
+
+      - name: Publicar relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pytest-report
+          path: backend/pytest-report.xml
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend · lint, testes e build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependências
+        run: npm ci
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Checagem de tipos
+        run: npm run typecheck --if-present
+      - name: Testes
+        env:
+          CI: "true" # vitest/jest rodam sem modo watch
+        run: npm test --if-present
+      - name: Build de produção
+        run: npm run build
+
+  compose-smoke:
+    name: Homologação · stack sobe do zero
+    if: >-
+      github.base_ref == 'homolog' || github.base_ref == 'main' ||
+      github.ref_name == 'homolog' || github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar .env
+        run: |
+          cp .env.example .env
+          sed -i 's/^STORAGE_BACKEND=.*/STORAGE_BACKEND=local/' .env
+      - name: docker compose up --build
+        run: docker compose up -d --build
+      - name: Aguardar GET /health (porta 8000 assumida)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8000/health; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::/health não respondeu em 5 minutos"
+          docker compose ps
+          docker compose logs --no-color --tail=200
+          exit 1
+      - name: Estado dos containers
+        run: docker compose ps
+      - name: Derrubar a stack
+        if: always()
+        run: docker compose down -v
+
+  ci-ok:
+    name: CI OK
+    if: always()
+    needs:
+      - changes
+      - segredos
+      - compose-config
+      - backend-lint
+      - backend-test
+      - frontend
+      - compose-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consolidar resultado
+        run: |
+          echo '${{ toJson(needs) }}'
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || \
+                "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "::error::Algum job do CI falhou."
+            exit 1
+          fi
