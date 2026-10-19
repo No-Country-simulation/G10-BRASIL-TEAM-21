@@ -139,6 +139,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Migrações · cabeça única do Alembic
+        if: hashFiles('backend/alembic.ini') != ''
         run: |
           heads=$(alembic heads | grep -c '(head)' || true)
           if [ "$heads" -ne 1 ]; then
@@ -154,7 +155,8 @@ jobs:
           alembic upgrade head
 
       - name: pytest
-        run: pytest -q --junitxml=pytest-report.xml
+      # || [ $? -eq 5 ] Adicionado enquanto não tiver testes configurados
+        run: pytest -q --junitxml=pytest-report.xml || [ $? -eq 5 ]
 
       - name: Publicar relatório de testes
         if: always()
