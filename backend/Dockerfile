@@ -7,7 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /srv
 
 COPY pyproject.toml ./
-RUN pip install . pytest httpx
+# A mudança está aqui: instalar o pacote com as dependências de dev (ruff, pytest, httpx)
+RUN pip install ".[dev]"
 
 COPY app ./app
 COPY alembic.ini ./

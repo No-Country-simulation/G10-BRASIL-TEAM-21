@@ -61,6 +61,6 @@ class ItemRoteiroAula(BaseModel):
 
 
 # União discriminada por `extra="forbid"`: cada tipo só aceita seus próprios campos.
-ItemConteudo = Union[
-    ItemFlashcard, ItemQuiz, ItemTutorial, ItemResumo, ItemRoteiroAula
-]
+ItemConteudo = (
+    ItemFlashcard | ItemQuiz | ItemTutorial | ItemResumo | ItemRoteiroAula
+)
