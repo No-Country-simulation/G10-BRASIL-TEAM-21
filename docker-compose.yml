@@ -1,11 +1,9 @@
-# adaptai — stack local (ADR-0015). Suba com: docker compose up --build
+# AdaptAI — stack local (ADR-0015). Suba com: docker compose up --build
 # Pré-requisito: copiar .env.example para .env e preencher as variáveis obrigatórias.
 name: adaptai
 
 services:
   db:
-    # Imagem oficial do pgvector sobre PostgreSQL 16. Confirmar a tag e, se for usar a VM Arm
-    # da OCI, o suporte a arm64 no spike da semana 1 (US-007).
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
@@ -19,8 +17,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    # Sem "ports": o banco não é exposto fora da rede do Compose (ADR-0015).
-    # Para inspecionar: docker compose exec db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 
   backend:
     build: ./backend
@@ -29,8 +25,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      adaptai_ENV: ${adaptai_ENV:-dev}
-      adaptai_MODO_DEMO: ${adaptai_MODO_DEMO:-false}
+      ADAPTAI_ENV: ${ADAPTAI_ENV:-dev}
+      ADAPTAI_MODO_DEMO: ${ADAPTAI_MODO_DEMO:-false}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       JWT_EXPIRA_MIN: ${JWT_EXPIRA_MIN:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
@@ -52,8 +48,6 @@ services:
       EMBEDDING_DIM: ${EMBEDDING_DIM:-}
     volumes:
       - local_storage:/srv/.local-storage
-      # Com STORAGE_BACKEND=oci, monte a chave da API (arquivo fora do Git, pasta "secrets/"):
-      # - ./secrets/oci_api_key.pem:/run/secrets/oci_api_key.pem:ro
     ports:
       - "8000:8000"
     healthcheck:
@@ -67,14 +61,11 @@ services:
       retries: 5
       start_period: 10s
 
-  # Front-end React + Vite (ADR-0012). Só sobe se frontend/ tiver package.json e package-lock.json:
-  # commite o projeto Vite junto com este serviço, senão "docker compose up --build" falha no build.
   frontend:
     build: ./frontend
     depends_on:
       - backend
     environment:
-      # Lido pelo navegador, então aponta para a porta publicada no host, não para o nome do serviço.
       VITE_API_URL: http://localhost:8000/api/v1
     ports:
       - "5173:5173"
