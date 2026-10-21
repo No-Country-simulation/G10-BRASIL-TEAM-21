@@ -35,7 +35,7 @@ services:
       # (Mantenha as variáveis da OCI e LLM que já estavam aqui)
     volumes:
       - local_storage:/srv/.local-storage
-    # A porta 8000 não é mais exposta ao host, o Nginx fala com ele internamente
+      - ./backend:/srv
     expose:
       - "8000"
 

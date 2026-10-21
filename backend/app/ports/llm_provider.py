@@ -1,4 +1,5 @@
 """Contrato do provedor de LLM e embeddings (ADR-0011)."""
+
 from abc import ABC, abstractmethod
 from typing import Any
 

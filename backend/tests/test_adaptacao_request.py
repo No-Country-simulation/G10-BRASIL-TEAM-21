@@ -1,9 +1,10 @@
 """T1.8 — regra de documento_id XOR título+conteúdo."""
+
 import pytest
 from pydantic import ValidationError
 
 from app.schemas.adaptacao import AdaptacaoRequest
-from app.schemas.enums import FormatoSaida, NivelDetalhe, Nicho, PerfilSaida
+from app.schemas.enums import FormatoSaida, Nicho, NivelDetalhe, PerfilSaida
 
 
 def _base_kwargs() -> dict:

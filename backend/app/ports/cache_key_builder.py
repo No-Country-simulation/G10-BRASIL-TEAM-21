@@ -1,4 +1,5 @@
 """Contrato do construtor de cache_key (RN-20)."""
+
 from abc import ABC, abstractmethod
 
 
@@ -19,5 +20,4 @@ class CacheKeyBuilder(ABC):
         nivel_detalhe: str,
         incluir_analogias: bool,
         incluir_microlearning: bool,
-    ) -> str:
-        ...
+    ) -> str: ...

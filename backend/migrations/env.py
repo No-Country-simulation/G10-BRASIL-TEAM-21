@@ -1,4 +1,5 @@
 """Alembic env: URL vinda de app.config (nunca do .ini)."""
+
 from logging.config import fileConfig
 
 from alembic import context

@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from pydantic import ValidationError
 
 from app.config import Settings
@@ -22,7 +23,7 @@ def test_variavel_vazia_conta_como_ausente(monkeypatch):
     configuracao = Settings(
         jwt_secret="test_secret",
         database_url="postgresql://test",
-        _env_file=None  # type: ignore
+        _env_file=None,  # type: ignore
     )
 
     assert configuracao.embedding_dim is None

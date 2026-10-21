@@ -1,13 +1,15 @@
 """Perfil, respostas de quiz, testes de nível."""
+
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from .adaptacao import TrilhaEvolucao
 from .enums import Nivel
 from .itens import Alternativa
 
-
 # ---------- Quiz ----------
+
 
 class RespostaQuizItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -45,6 +47,7 @@ class RespostasQuizResponse(BaseModel):
 
 # ---------- Perfil ----------
 
+
 class EventoHistorico(BaseModel):
     model_config = ConfigDict(extra="forbid")
     tipo: str
@@ -58,6 +61,7 @@ class PerfilResponse(TrilhaEvolucao):
 
 
 # ---------- Teste de Nível ----------
+
 
 class PerguntaTeste(BaseModel):
     model_config = ConfigDict(extra="forbid")

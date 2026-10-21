@@ -1,14 +1,13 @@
 """Requisição, resposta e avaliação de adaptação (v3)."""
-from datetime import datetime
-from typing import Union
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .enums import (
     DominioConhecimento,
     FormatoSaida,
+    Nicho,
     Nivel,
     NivelDetalhe,
-    Nicho,
     PerfilSaida,
     StatusUpload,
 )
@@ -21,8 +20,8 @@ from .itens import (
     ItemTutorial,
 )
 
-
 # ---------- Requisição ----------
+
 
 class AdaptacaoRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -42,9 +41,7 @@ class AdaptacaoRequest(BaseModel):
         conteudo = self.documento_conteudo
         parcial = (titulo is None) != (conteudo is None)
         if parcial:
-            raise ValueError(
-                "documento_titulo e documento_conteudo devem ser informados juntos."
-            )
+            raise ValueError("documento_titulo e documento_conteudo devem ser informados juntos.")
         tem_id = self.documento_id is not None
         tem_conteudo = titulo is not None and conteudo is not None
         if tem_id and tem_conteudo:
@@ -52,13 +49,12 @@ class AdaptacaoRequest(BaseModel):
                 "Informe documento_id OU documento_titulo + documento_conteudo, nunca os dois."
             )
         if not tem_id and not tem_conteudo:
-            raise ValueError(
-                "Informe documento_id OU documento_titulo + documento_conteudo."
-            )
+            raise ValueError("Informe documento_id OU documento_titulo + documento_conteudo.")
         return self
 
 
 # ---------- Blocos da resposta ----------
+
 
 class Metadados(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -119,7 +115,7 @@ class AvaliacaoQualidade(BaseModel):
     model_config = ConfigDict(extra="forbid")
     ancoragem_fonte_score: float
     fidelidade_analogias_score: float | None = None
-    clareza_pedagogica: str  
+    clareza_pedagogica: str
     chunks_utilizados: int
     busca_hibrida: bool = False
     observacoes: str = ""
@@ -150,6 +146,7 @@ class ArmazenamentoOCI(BaseModel):
 
 
 # ---------- Resposta completa ----------
+
 
 class AdaptacaoResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")

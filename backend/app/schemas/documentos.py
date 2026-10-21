@@ -1,6 +1,9 @@
 """Documentos: criação e listagem (v3 com domínio)."""
+
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
+
 from .enums import (
     ClassificadorUsado,
     DominioConhecimento,
@@ -11,6 +14,7 @@ from .enums import (
 
 class DocumentoCreateTexto(BaseModel):
     """Entrada JSON para texto bruto (alternativa ao multipart)."""
+
     model_config = ConfigDict(extra="forbid")
     titulo: str
     conteudo: str
@@ -18,6 +22,7 @@ class DocumentoCreateTexto(BaseModel):
 
 class DocumentoResponse(BaseModel):
     """Saída de POST /documentos (v3)."""
+
     model_config = ConfigDict(extra="forbid")
     documento_id: str
     titulo: str
@@ -31,6 +36,7 @@ class DocumentoResponse(BaseModel):
 
 class DocumentoResumo(BaseModel):
     """Item de GET /documentos (v3)."""
+
     model_config = ConfigDict(extra="forbid")
     documento_id: str
     titulo: str

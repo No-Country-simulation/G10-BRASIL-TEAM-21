@@ -6,6 +6,7 @@ Saída: backend/data/classifiers/modelo-v1.pkl
 Dataset sintético esperado em backend/data/classifiers/dataset.csv com
 colunas `texto,dominio` e >= 200 exemplos por 4 a 6 domínios.
 """
+
 from pathlib import Path
 
 

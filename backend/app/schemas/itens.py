@@ -1,5 +1,5 @@
 """Itens por formato (contrato, seção 5.3)."""
-from typing import Union
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -23,7 +23,7 @@ class ItemQuiz(BaseModel):
     model_config = ConfigDict(extra="forbid")
     pergunta: str
     alternativas: list[Alternativa]
-    resposta_correta: str       # id da alternativa correta
+    resposta_correta: str  # id da alternativa correta
     justificativa: str
     conceito_ref: str
     analogia_ref: str | None = None
@@ -61,6 +61,4 @@ class ItemRoteiroAula(BaseModel):
 
 
 # União discriminada por `extra="forbid"`: cada tipo só aceita seus próprios campos.
-ItemConteudo = (
-    ItemFlashcard | ItemQuiz | ItemTutorial | ItemResumo | ItemRoteiroAula
-)
+ItemConteudo = ItemFlashcard | ItemQuiz | ItemTutorial | ItemResumo | ItemRoteiroAula

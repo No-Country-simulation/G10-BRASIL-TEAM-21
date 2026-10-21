@@ -1,4 +1,5 @@
 """App FastAPI do AdaptAI. Stubs de T1: rotas retornam 501 até semana 2."""
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

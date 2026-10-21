@@ -1,9 +1,11 @@
 """Listagens paginadas."""
+
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
-from .enums import DominioConhecimento, FormatoSaida, Nicho, PerfilSaida, StatusUpload
 from .documentos import DocumentoResumo
+from .enums import DominioConhecimento, FormatoSaida, Nicho, PerfilSaida, StatusUpload
 
 
 class DocumentosListResponse(BaseModel):

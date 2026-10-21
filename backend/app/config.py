@@ -1,4 +1,3 @@
-from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,7 +27,7 @@ class Settings(BaseSettings):
     llm_model: str = ""
     llm_api_key: str = ""
     embedding_model: str = ""
-    embedding_dim: int | None = None # <-- Alterado para aceitar None
+    embedding_dim: int | None = None  # <-- Alterado para aceitar None
 
     @field_validator("embedding_dim", mode="before")
     @classmethod

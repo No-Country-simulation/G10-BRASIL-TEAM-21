@@ -1,4 +1,5 @@
 """Routers da API v1."""
+
 from . import adaptacoes, auth, documentos, health, perfil
 from . import teste_nivel as testes_nivel
 

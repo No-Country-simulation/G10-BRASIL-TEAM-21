@@ -1,5 +1,7 @@
 """Auth: cadastro, login, logout, usuário logado."""
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 from .enums import Nivel
 
 

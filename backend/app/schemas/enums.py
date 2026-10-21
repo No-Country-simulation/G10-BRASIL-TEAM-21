@@ -8,6 +8,7 @@ class Nivel(str, Enum):
     O rótulo exibido ao usuário depende do domínio (ver ROTULOS_NIVEL_POR_DOMINIO).
     Armazenamento, XP, limiares e Teste de Nível usam SEMPRE este enum.
     """
+
     INICIANTE = "Iniciante"
     BASICO = "Basico"
     INTERMEDIARIO = "Intermediario"
@@ -17,6 +18,7 @@ class Nivel(str, Enum):
 
 class PerfilSaida(str, Enum):
     """Perfil de saída da adaptação. Os 5 níveis + o perfil fora da escada."""
+
     INICIANTE = "Iniciante"
     BASICO = "Basico"
     INTERMEDIARIO = "Intermediario"
@@ -56,6 +58,7 @@ class StatusUpload(str, Enum):
 
 class DominioConhecimento(str, Enum):
     """v3 — classificado na ingestão (RN-21)."""
+
     GERAL = "Geral"
     TI = "TI"
     MEDICINA = "Medicina"

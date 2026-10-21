@@ -1,5 +1,5 @@
 """Formatos compartilhados: erro, paginação."""
-from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -11,6 +11,7 @@ class ErroDetalhe(BaseModel):
 
 class ErroResposta(BaseModel):
     """Formato único de erro (contrato, seção 8)."""
+
     model_config = ConfigDict(extra="forbid")
     status: str = "erro"
     codigo: str

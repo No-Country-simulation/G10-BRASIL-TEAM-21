@@ -4,16 +4,17 @@ Revision ID: 0001
 Revises:
 Create Date: 2026-10-21
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0001"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -37,14 +38,18 @@ def upgrade() -> None:
     op.create_table(
         "perfis_evolucao",
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), primary_key=True,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            primary_key=True,
         ),
         sa.Column("nivel_atual", sa.String(30), nullable=False),
         sa.Column("xp_total", sa.Integer, nullable=False, server_default="0"),
         sa.Column(
-            "atualizado_em", sa.DateTime(timezone=True),
-            server_default=sa.func.now(), onupdate=sa.func.now(),
+            "atualizado_em",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
         ),
         sa.CheckConstraint("xp_total >= 0", name="ck_perfil_xp_nonneg"),
     )
@@ -53,8 +58,10 @@ def upgrade() -> None:
         "documentos",
         sa.Column("documento_id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("titulo", sa.String(500), nullable=False),
         sa.Column("formato_origem", sa.String(20), nullable=False),
@@ -85,8 +92,10 @@ def upgrade() -> None:
     op.create_table(
         "chunks",
         sa.Column(
-            "documento_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("documentos.documento_id", ondelete="CASCADE"), primary_key=True,
+            "documento_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("documentos.documento_id", ondelete="CASCADE"),
+            primary_key=True,
         ),
         sa.Column("chunk_id", sa.String(50), primary_key=True),
         sa.Column("ordem", sa.Integer, nullable=False),
@@ -103,12 +112,16 @@ def upgrade() -> None:
         "adaptacoes",
         sa.Column("adaptacao_id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column(
-            "documento_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("documentos.documento_id", ondelete="CASCADE"), nullable=False,
+            "documento_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("documentos.documento_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("perfil_destinatario", sa.String(30), nullable=False),
         sa.Column("formato_saida", sa.String(30), nullable=False),
@@ -138,12 +151,16 @@ def upgrade() -> None:
         "eventos_xp",
         sa.Column("evento_id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column(
-            "adaptacao_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("adaptacoes.adaptacao_id", ondelete="CASCADE"), nullable=False,
+            "adaptacao_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("adaptacoes.adaptacao_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("tipo", sa.String(30), nullable=False),
         sa.Column("xp", sa.Integer, nullable=False),
@@ -160,8 +177,10 @@ def upgrade() -> None:
     op.create_table(
         "conceitos_progresso",
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), primary_key=True,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            primary_key=True,
         ),
         sa.Column("conceito", sa.String(200), primary_key=True),
         sa.Column("nivel_origem", sa.String(30), nullable=False),
@@ -174,8 +193,10 @@ def upgrade() -> None:
         "testes_nivel",
         sa.Column("teste_id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "usuario_id", postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False,
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("usuarios.usuario_id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("nivel_avaliado", sa.String(30), nullable=False),
         sa.Column("perguntas", postgresql.JSONB, nullable=False),

@@ -2,6 +2,7 @@
 
 Uso: python -m backend.scripts.export_openapi  (a partir da raiz do backend/)
 """
+
 import json
 from pathlib import Path
 

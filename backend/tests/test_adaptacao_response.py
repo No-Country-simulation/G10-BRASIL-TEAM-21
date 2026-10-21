@@ -1,4 +1,5 @@
 """T1.8 — consistência entre formato_gerado e itens."""
+
 import pytest
 from pydantic import ValidationError
 
@@ -11,12 +12,12 @@ from app.schemas.adaptacao import (
 from app.schemas.enums import (
     DominioConhecimento,
     FormatoSaida,
+    Nicho,
     Nivel,
     NivelDetalhe,
-    Nicho,
     PerfilSaida,
 )
-from app.schemas.itens import ItemFlashcard, ItemQuiz, Alternativa # <-- Importei Alternativa
+from app.schemas.itens import Alternativa, ItemFlashcard, ItemQuiz  # <-- Importei Alternativa
 
 
 def _metadados(formato: FormatoSaida) -> Metadados:
@@ -45,14 +46,19 @@ def _avaliacao() -> AvaliacaoQualidade:
 
 def test_flashcard_com_item_flashcard_ok():
     item = ItemFlashcard(
-        frente="f", verso="v", dica_didatica="d",
-        conceito_ref="VCN", fontes_chunks=["chunk-001"],
+        frente="f",
+        verso="v",
+        dica_didatica="d",
+        conceito_ref="VCN",
+        fontes_chunks=["chunk-001"],
     )
     resp = AdaptacaoResponse(
         request_id="r1",
         metadados=_metadados(FormatoSaida.FLASHCARDS),
         conteudo_adaptado=ConteudoAdaptado(
-            titulo="T", introducao_contextualizada="i", itens=[item],
+            titulo="T",
+            introducao_contextualizada="i",
+            itens=[item],
         ),
         avaliacao_qualidade=_avaliacao(),
     )
@@ -79,7 +85,9 @@ def test_flashcard_com_item_quiz_falha():
             request_id="r1",
             metadados=_metadados(FormatoSaida.FLASHCARDS),
             conteudo_adaptado=ConteudoAdaptado(
-                titulo="T", introducao_contextualizada="i", itens=[item_errado],
+                titulo="T",
+                introducao_contextualizada="i",
+                itens=[item_errado],
             ),
             avaliacao_qualidade=_avaliacao(),
         )

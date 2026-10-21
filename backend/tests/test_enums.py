@@ -1,11 +1,12 @@
 """T1.8 — enums alinhados ao contrato."""
+
 from app.schemas.enums import (
     ClassificadorUsado,
     DominioConhecimento,
     FormatoSaida,
+    Nicho,
     Nivel,
     NivelDetalhe,
-    Nicho,
     PerfilSaida,
     StatusUpload,
 )

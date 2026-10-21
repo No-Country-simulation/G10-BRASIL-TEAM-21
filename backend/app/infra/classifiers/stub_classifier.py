@@ -2,6 +2,7 @@
 
 Substituir por Scikit-learn (TF-IDF + LogisticRegression) na semana 2.
 """
+
 from ...ports.domain_classifier import ClassificacaoDominio, DomainClassifier
 from ...schemas.enums import DominioConhecimento
 

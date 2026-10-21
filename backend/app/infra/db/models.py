@@ -1,4 +1,5 @@
 """Modelos SQLAlchemy 2.x. Embedding fica de fora até T2.9 (N indefinido)."""
+
 import uuid
 from datetime import datetime
 
@@ -30,7 +31,9 @@ def _uuid() -> uuid.UUID:
 
 class Usuario(Base):
     __tablename__ = "usuarios"
-    usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=_uuid
+    )
     nome: Mapped[str] = mapped_column(String(200), nullable=False)
     email: Mapped[str] = mapped_column(String(320), nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -53,16 +56,18 @@ class PerfilEvolucao(Base):
     )
     nivel_atual: Mapped[str] = mapped_column(String(30), nullable=False)
     xp_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    __table_args__ = (
-        CheckConstraint("xp_total >= 0", name="ck_perfil_xp_nonneg"),
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    __table_args__ = (CheckConstraint("xp_total >= 0", name="ck_perfil_xp_nonneg"),)
 
 
 class Documento(Base):
     __tablename__ = "documentos"
-    documento_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    documento_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=_uuid
+    )
     usuario_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False
     )
@@ -77,7 +82,9 @@ class Documento(Base):
     classificador_usado: Mapped[str | None] = mapped_column(String(20), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    chunks: Mapped[list["Chunk"]] = relationship(back_populates="documento", cascade="all, delete-orphan")
+    chunks: Mapped[list["Chunk"]] = relationship(
+        back_populates="documento", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint("usuario_id", "hash_conteudo", name="ux_documentos_usuario_hash"),
@@ -101,7 +108,9 @@ class Documento(Base):
 class Chunk(Base):
     __tablename__ = "chunks"
     documento_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("documentos.documento_id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("documentos.documento_id", ondelete="CASCADE"),
+        primary_key=True,
     )
     chunk_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -115,19 +124,21 @@ class Chunk(Base):
 
     documento: Mapped[Documento] = relationship(back_populates="chunks")
 
-    __table_args__ = (
-        Index("ix_chunks_tsvector", "tsvector_conteudo", postgresql_using="gin"),
-    )
+    __table_args__ = (Index("ix_chunks_tsvector", "tsvector_conteudo", postgresql_using="gin"),)
 
 
 class Adaptacao(Base):
     __tablename__ = "adaptacoes"
-    adaptacao_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    adaptacao_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=_uuid
+    )
     usuario_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False
     )
     documento_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("documentos.documento_id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("documentos.documento_id", ondelete="CASCADE"),
+        nullable=False,
     )
     perfil_destinatario: Mapped[str] = mapped_column(String(30), nullable=False)
     formato_saida: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -152,7 +163,8 @@ class Adaptacao(Base):
         # RN-20: idempotência por (usuario, cache_key) apenas quando concluído
         Index(
             "ux_adaptacoes_usuario_cache",
-            "usuario_id", "cache_key",
+            "usuario_id",
+            "cache_key",
             unique=True,
             postgresql_where=("status_upload = 'concluido'"),
         ),
@@ -161,12 +173,16 @@ class Adaptacao(Base):
 
 class EventoXP(Base):
     __tablename__ = "eventos_xp"
-    evento_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    evento_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=_uuid
+    )
     usuario_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False
     )
     adaptacao_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("adaptacoes.adaptacao_id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("adaptacoes.adaptacao_id", ondelete="CASCADE"),
+        nullable=False,
     )
     tipo: Mapped[str] = mapped_column(String(30), nullable=False)
     xp: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -178,7 +194,8 @@ class EventoXP(Base):
         # XP uma vez por pergunta e adaptação
         Index(
             "ux_eventos_acerto_quiz",
-            "adaptacao_id", "item_indice",
+            "adaptacao_id",
+            "item_indice",
             unique=True,
             postgresql_where=("tipo = 'acerto_quiz'"),
         ),
@@ -214,6 +231,4 @@ class TesteNivel(Base):
     tentativa: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        Index("ix_testes_usuario_criado", "usuario_id", "criado_em"),
-    )
+    __table_args__ = (Index("ix_testes_usuario_criado", "usuario_id", "criado_em"),)

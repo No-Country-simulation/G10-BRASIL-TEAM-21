@@ -1,4 +1,5 @@
 """T1.8 — todas as rotas da seção 2 do contrato aparecem no OpenAPI."""
+
 from fastapi.testclient import TestClient
 
 from app.main import app

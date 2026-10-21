@@ -1,4 +1,5 @@
 """Dependências compartilhadas dos routers (stubs de T1)."""
+
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -10,7 +11,7 @@ async def get_current_user_stub(
 ) -> dict:
     """Stub de T1: documenta o esquema Bearer e devolve um usuário fixo.
 
-    TODO(T2/semana 2): validar JWT de verdade e retornar o usuário do banco.    
+    TODO(T2/semana 2): validar JWT de verdade e retornar o usuário do banco.
     """
     if credentials is None:
         raise HTTPException(
