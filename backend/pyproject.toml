@@ -18,6 +18,10 @@ dependencies = [
   "uvicorn[standard]>=0.30,<1",
   "pydantic>=2.8,<3",
   "pydantic-settings>=2.4,<3",
+  "email-validator",
+  "python-multipart>=0.0.9",
+  "PyJWT>=2.8,<3",
+  "bcrypt>=4,<5",
   "sqlalchemy>=2.0,<3",
   "alembic>=1.13,<2",
   "psycopg[binary]>=3.2,<4",
@@ -48,3 +52,8 @@ known-first-party = ["app"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# Filtra os avisos de depreciação do Starlette/httpx para deixar o log limpo
+filterwarnings = [
+    "ignore::DeprecationWarning:starlette.*",
+    "ignore::DeprecationWarning:httpx.*"
+]

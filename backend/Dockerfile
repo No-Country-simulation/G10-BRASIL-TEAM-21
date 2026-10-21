@@ -7,12 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /srv
 
 COPY pyproject.toml ./
-RUN pip install .
+RUN pip install . pytest httpx
 
 COPY app ./app
-# Incluindo suporte ao banco
 COPY alembic.ini ./
 COPY migrations ./migrations
+COPY tests ./tests
 
 RUN useradd --system --uid 10001 --no-create-home app \
     && mkdir -p /srv/.local-storage \
