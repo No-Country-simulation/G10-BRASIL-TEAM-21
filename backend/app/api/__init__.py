@@ -1,4 +1,6 @@
-"""Routers FastAPI (auth, documentos, adaptacoes, perfil, testes-nivel).
+"""Routers da API v1."""
 
-Dependem de services, agents e rag; nunca de infra diretamente (docs/04, seção 2).
-"""
+from . import adaptacoes, auth, documentos, health, perfil
+from . import teste_nivel as testes_nivel
+
+__all__ = ["adaptacoes", "auth", "documentos", "health", "perfil", "testes_nivel"]

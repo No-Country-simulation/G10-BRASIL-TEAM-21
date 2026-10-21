@@ -1,13 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from app import __version__
-from app.schemas.health import HealthResponse
+from ..infra.db.session import get_db  # (Você precisará criar o session.py se ainda não tem)
 
-router = APIRouter(tags=["saude"])
+router = APIRouter(tags=["health"])
 
 
-@router.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    # Por enquanto só confirma que a API está de pé. A checagem do banco e do pgvector
-    # entra com US-008 e a do bucket com US-006/US-035 (contrato, seção 2).
-    return HealthResponse(status="ok", versao=__version__)
+@router.get("/health")
+async def health(db: Session = Depends(get_db)) -> dict:
+    status = {"api": "ok", "db": "ok", "pgvector": "ok"}
+    try:
+        db.execute(text("SELECT 1"))
+        # Verifica se a extensão vector está ativa
+        result = db.execute(
+            text("SELECT extname FROM pg_extension WHERE extname = 'vector'")
+        ).fetchone()
+        if not result:
+            status["pgvector"] = "falha"
+    except Exception:
+        status["db"] = "falha"
+        status["pgvector"] = "desconhecido"
+
+    return status

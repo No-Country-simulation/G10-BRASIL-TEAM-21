@@ -1,6 +1,24 @@
-"""Ambiente mínimo para os testes: sem rede, sem banco. Os segredos abaixo só valem nos testes."""
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-import os
+from app.config import get_settings
 
-os.environ.setdefault("JWT_SECRET", "segredo-somente-de-teste")
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://teste:teste@localhost:5432/teste")
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "integration: testes que dependem do PostgreSQL do Compose")
+
+
+@pytest.fixture(scope="session")
+def engine():
+    # Usa o banco do Docker Compose
+    url = get_settings().database_url
+    return create_engine(url)
+
+
+@pytest.fixture
+def db_session(engine):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
