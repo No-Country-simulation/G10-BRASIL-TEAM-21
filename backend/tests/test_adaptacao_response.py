@@ -16,7 +16,7 @@ from app.schemas.enums import (
     Nicho,
     PerfilSaida,
 )
-from app.schemas.itens import ItemFlashcard, ItemQuiz
+from app.schemas.itens import ItemFlashcard, ItemQuiz, Alternativa # <-- Importei Alternativa
 
 
 def _metadados(formato: FormatoSaida) -> Metadados:
@@ -29,7 +29,7 @@ def _metadados(formato: FormatoSaida) -> Metadados:
         tempo_estimado_estudo_minutos=5,
         conceitos_chave=["VCN"],
         pre_requisitos=[],
-        nivel_documento_estimado=Nivel.DEV_PLENO,
+        nivel_documento_estimado=Nivel.INTERMEDIARIO,
         alerta_descompasso=True,
     )
 
@@ -57,13 +57,18 @@ def test_flashcard_com_item_flashcard_ok():
         avaliacao_qualidade=_avaliacao(),
     )
     assert resp.cache_hit is False
-    assert resp.conteudo_adaptado.itens[0].frente == "f"
+
+    # O isinstance avisa ao VS Code que o item é um Flashcard antes de acessar o .frente
+    item_gerado = resp.conteudo_adaptado.itens[0]
+    assert isinstance(item_gerado, ItemFlashcard)
+    assert item_gerado.frente == "f"
 
 
 def test_flashcard_com_item_quiz_falha():
     item_errado = ItemQuiz(
         pergunta="p",
-        alternativas=[{"id": "a", "texto": "A"}],
+        # Instanciando o objeto Alternativa em vez de passar um dicionário
+        alternativas=[Alternativa(id="a", texto="A")],
         resposta_correta="a",
         justificativa="j",
         conceito_ref="VCN",

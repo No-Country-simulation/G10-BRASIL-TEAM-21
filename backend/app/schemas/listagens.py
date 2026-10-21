@@ -20,7 +20,7 @@ class AdaptacaoResumo(BaseModel):
     perfil_aplicado: PerfilSaida
     formato_gerado: FormatoSaida
     nicho_aplicado: Nicho
-    dominio_conhecimento: DominioConhecimento | None = None  # v3
+    dominio_conhecimento: DominioConhecimento | None = None
     ancoragem_fonte_score: float
     status_upload: StatusUpload
     criado_em: datetime
