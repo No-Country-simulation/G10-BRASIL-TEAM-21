@@ -65,11 +65,14 @@ def limiar_para_subir(nivel: Nivel, modo_demo: bool = False) -> int | None:
     return base
 
 
-def teste_nivel_disponivel(xp_total: int, nivel: Nivel, modo_demo: bool = False) -> bool:
+def pode_fazer_teste_nivel(xp_total: int, nivel: Nivel, modo_demo: bool = False) -> bool:
     """O usuário já pode fazer o Teste de Nível? (RN-06)
 
     Sim quando o XP acumulado atinge o limiar do nível atual. O XP continua
     acumulando depois disso. No nível máximo nunca está disponível.
+
+    Nome: não pode começar com "test", senão o pytest tenta rodar esta
+    função como se fosse um teste ao importá-la no arquivo de testes.
     """
     limiar = limiar_para_subir(nivel, modo_demo)
     if limiar is None:

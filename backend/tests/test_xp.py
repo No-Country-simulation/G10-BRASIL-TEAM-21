@@ -3,8 +3,8 @@
 from app.domain.enums import Nivel
 from app.domain.xp import (
     limiar_para_subir,
+    pode_fazer_teste_nivel,
     progresso_percentual,
-    teste_nivel_disponivel,
     xp_por_acerto_quiz,
     xp_por_geracao,
 )
@@ -55,17 +55,17 @@ def test_modo_demo_divide_limiares_por_dez():
 
 
 def test_teste_de_nivel_libera_ao_atingir_o_limiar():
-    assert teste_nivel_disponivel(99, Nivel.INICIANTE) is False
-    assert teste_nivel_disponivel(100, Nivel.INICIANTE) is True
+    assert pode_fazer_teste_nivel(99, Nivel.INICIANTE) is False
+    assert pode_fazer_teste_nivel(100, Nivel.INICIANTE) is True
 
 
 def test_teste_de_nivel_continua_disponivel_com_xp_acima():
     # RN-06: o XP segue acumulando depois do limiar.
-    assert teste_nivel_disponivel(180, Nivel.INICIANTE) is True
+    assert pode_fazer_teste_nivel(180, Nivel.INICIANTE) is True
 
 
 def test_arquiteto_nunca_tem_teste_de_nivel():
-    assert teste_nivel_disponivel(5000, Nivel.ARQUITETO) is False
+    assert pode_fazer_teste_nivel(5000, Nivel.ARQUITETO) is False
 
 
 def test_progresso_percentual_igual_ao_exemplo_do_contrato():
