@@ -75,3 +75,12 @@ class StatusUpload(StrEnum):
     PENDENTE = "pendente"
     CONCLUIDO = "concluido"
     FALHA = "falha"
+
+class EstadoConceito(StrEnum):
+    """Situação de um conceito na trilha do usuário (doc 03, seção 4).
+
+    Só avança: não existe retorno automático de DOMINADO para EM_APRENDIZADO.
+    """
+
+    EM_APRENDIZADO = "em_aprendizado"
+    DOMINADO = "dominado"
