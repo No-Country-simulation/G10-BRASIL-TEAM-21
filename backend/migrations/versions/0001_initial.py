@@ -27,7 +27,9 @@ def upgrade() -> None:
         sa.Column("email", sa.String(320), nullable=False),
         sa.Column("senha_hash", sa.String(255), nullable=False),
         sa.Column("nivel_declarado", sa.String(30), nullable=False),
-        sa.Column("criado_em", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "criado_em", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint(
             "nivel_declarado IN ('Iniciante','Basico','Intermediario','Avancado','Especialista')",
             name="ck_usuarios_nivel",
@@ -50,6 +52,7 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
+            nullable=False,
         ),
         sa.CheckConstraint("xp_total >= 0", name="ck_perfil_xp_nonneg"),
     )
@@ -71,7 +74,9 @@ def upgrade() -> None:
         sa.Column("nivel_documento_estimado", sa.String(30), nullable=True),
         sa.Column("dominio_conhecimento", sa.String(30), nullable=True),
         sa.Column("classificador_usado", sa.String(20), nullable=True),
-        sa.Column("criado_em", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "criado_em", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.UniqueConstraint("usuario_id", "hash_conteudo", name="ux_documentos_usuario_hash"),
         sa.CheckConstraint(
             "status_upload IN ('pendente','concluido','falha')",
@@ -133,7 +138,9 @@ def upgrade() -> None:
         sa.Column("ancoragem_fonte_score", sa.Numeric(4, 3), nullable=False),
         sa.Column("objeto_oci", sa.String(1000), nullable=False, server_default=""),
         sa.Column("status_upload", sa.String(20), nullable=False, server_default="pendente"),
-        sa.Column("criado_em", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "criado_em", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint(
             "status_upload IN ('pendente','concluido','falha')",
             name="ck_adaptacoes_status",
@@ -165,7 +172,9 @@ def upgrade() -> None:
         sa.Column("tipo", sa.String(30), nullable=False),
         sa.Column("xp", sa.Integer, nullable=False),
         sa.Column("item_indice", sa.Integer, nullable=True),
-        sa.Column("criado_em", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "criado_em", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("tipo IN ('geracao_conteudo','acerto_quiz')", name="ck_eventos_tipo"),
     )
     op.execute(
@@ -204,7 +213,9 @@ def upgrade() -> None:
         sa.Column("percentual_dominio", sa.Numeric(4, 3), nullable=True),
         sa.Column("aprovado", sa.Boolean, nullable=True),
         sa.Column("tentativa", sa.Integer, nullable=False, server_default="1"),
-        sa.Column("criado_em", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "criado_em", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("ix_testes_usuario_criado", "testes_nivel", ["usuario_id", "criado_em"])
 
