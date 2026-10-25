@@ -804,7 +804,7 @@
     "/api/v1/health": {
       "get": {
         "tags": [
-          "saude"
+          "health"
         ],
         "summary": "Health",
         "operationId": "health_api_v1_health_get",
