@@ -1,4 +1,4 @@
-"""Documentos: criação e listagem (v3 com domínio)."""
+"""Documentos: criação e listagem (com domínio)."""
 
 from datetime import datetime
 
@@ -21,7 +21,7 @@ class DocumentoCreateTexto(BaseModel):
 
 
 class DocumentoResponse(BaseModel):
-    """Saída de POST /documentos (v3)."""
+    """Saída de POST /documentos."""
 
     model_config = ConfigDict(extra="forbid")
     documento_id: str
@@ -35,7 +35,7 @@ class DocumentoResponse(BaseModel):
 
 
 class DocumentoResumo(BaseModel):
-    """Item de GET /documentos (v3)."""
+    """Item de GET /documentos."""
 
     model_config = ConfigDict(extra="forbid")
     documento_id: str
