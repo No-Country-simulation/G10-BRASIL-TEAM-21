@@ -1,7 +1,11 @@
-"""Requisição, resposta e avaliação de adaptação (v3)."""
+"""Requisição, resposta e avaliação de adaptação."""
+
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic_core import PydanticCustomError
 
+from .common import VERSAO_SCHEMA
 from .enums import (
     DominioConhecimento,
     FormatoSaida,
@@ -41,15 +45,22 @@ class AdaptacaoRequest(BaseModel):
         conteudo = self.documento_conteudo
         parcial = (titulo is None) != (conteudo is None)
         if parcial:
-            raise ValueError("documento_titulo e documento_conteudo devem ser informados juntos.")
+            raise PydanticCustomError(
+                "requisicao_invalida",
+                "documento_titulo e documento_conteudo devem ser informados juntos.",
+            )
         tem_id = self.documento_id is not None
         tem_conteudo = titulo is not None and conteudo is not None
         if tem_id and tem_conteudo:
-            raise ValueError(
-                "Informe documento_id OU documento_titulo + documento_conteudo, nunca os dois."
+            raise PydanticCustomError(
+                "requisicao_invalida",
+                "Informe documento_id OU documento_titulo + documento_conteudo, nunca os dois.",
             )
         if not tem_id and not tem_conteudo:
-            raise ValueError("Informe documento_id OU documento_titulo + documento_conteudo.")
+            raise PydanticCustomError(
+                "requisicao_invalida",
+                "Informe documento_id OU documento_titulo + documento_conteudo.",
+            )
         return self
 
 
@@ -61,7 +72,7 @@ class Metadados(BaseModel):
     perfil_aplicado: PerfilSaida
     formato_gerado: FormatoSaida
     nicho_aplicado: Nicho
-    dominio_conhecimento: DominioConhecimento | None = None  # v3
+    dominio_conhecimento: DominioConhecimento | None = None
     nivel_detalhe: NivelDetalhe
     tempo_estimado_estudo_minutos: int
     conceitos_chave: list[str]
@@ -151,7 +162,7 @@ class ArmazenamentoOCI(BaseModel):
 class AdaptacaoResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: str = "sucesso"
-    versao_schema: str = "1.0"
+    versao_schema: Literal["1.0"] = VERSAO_SCHEMA
     request_id: str
     cache_hit: bool = False
     metadados: Metadados
@@ -160,7 +171,7 @@ class AdaptacaoResponse(BaseModel):
     microlearning: Microlearning | None = None
     avaliacao_qualidade: AvaliacaoQualidade
     trilha_evolucao: TrilhaEvolucao | None = None
-    armazenamento_oci: ArmazenamentoOCI | None = None
+    armazenamento_oci: ArmazenamentoOCI
 
     @model_validator(mode="after")
     def _consistencia_formato(self) -> "AdaptacaoResponse":
@@ -182,3 +193,16 @@ class AdaptacaoResponse(BaseModel):
                     f"recebido {type(item).__name__}."
                 )
         return self
+
+
+def ocultar_gabarito(resp: "AdaptacaoResponse") -> "AdaptacaoResponse":
+    if resp.metadados.formato_gerado != FormatoSaida.QUIZ:
+        return resp
+    novo = resp.model_copy(deep=True)
+    novo.conteudo_adaptado.itens = [
+        i.model_copy(update={"resposta_correta": None, "justificativa": None})
+        if isinstance(i, ItemQuiz)
+        else i
+        for i in novo.conteudo_adaptado.itens
+    ]
+    return novo
