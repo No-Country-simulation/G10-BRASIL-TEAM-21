@@ -7,5 +7,5 @@ venv/
 .env
 .env.*
 .local-storage/
-tests/
+#tests/
 *.md

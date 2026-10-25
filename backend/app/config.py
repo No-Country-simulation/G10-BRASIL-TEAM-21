@@ -1,49 +1,51 @@
-"""Configuração lida do ambiente (docs/04 - Arquitetura.md, seção 11).
-
-Nenhum segredo tem valor padrão: sem JWT_SECRET e DATABASE_URL a aplicação não sobe.
-"""
-
-from functools import lru_cache
-
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # env_ignore_empty: o Compose repassa variáveis vazias (ex.: OCI_REGION=);
-    # elas contam como ausentes.
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_ignore_empty=True)
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    adaptai_env: str = "dev"  # dev | demo | prod
-    adaptai_modo_demo: bool = False  # RN-16
-
+    adaptai_env: str = "dev"
+    adaptai_modo_demo: bool = False
     jwt_secret: str
     jwt_expira_min: int = 60
-    cors_origins: str = ""  # origens separadas por vírgula
+    cors_origins: str = "http://localhost:5173"
     max_upload_mb: int = 10
-
     database_url: str
-
-    storage_backend: str = "local"  # local | oci
+    storage_backend: str = "local"
     local_storage_dir: str = ".local-storage"
-    oci_region: str | None = None
-    oci_tenancy: str | None = None
-    oci_user: str | None = None
-    oci_fingerprint: str | None = None
-    oci_key_file: str | None = None
-    oci_namespace: str | None = None
+
+    oci_region: str = ""
+    oci_tenancy: str = ""
+    oci_user: str = ""
+    oci_fingerprint: str = ""
+    oci_key_file: str = ""
+    oci_namespace: str = ""
     oci_bucket: str = "adaptai-conteudos-educativos"
 
-    llm_provider: str | None = None  # ADR-0011, em decisão
-    llm_model: str | None = None
-    llm_api_key: str | None = None
-    embedding_model: str | None = None
-    embedding_dim: int | None = None  # dimensão da coluna vector(N) (ADR-0014)
+    llm_provider: str = ""
+    llm_model: str = ""
+    llm_api_key: str = ""
+    embedding_model: str = ""
+    embedding_dim: int | None = None  # <-- Alterado para aceitar None
+
+    @field_validator("embedding_dim", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
     @property
-    def cors_origin_list(self) -> list[str]:
-        return [origem.strip() for origem in self.cors_origins.split(",") if origem.strip()]
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
-@lru_cache
+_settings: Settings | None = None
+
+
 def get_settings() -> Settings:
-    return Settings()
+    global _settings
+    if _settings is None:
+        _settings = Settings()  # type: ignore[call-arg]
+    return _settings
