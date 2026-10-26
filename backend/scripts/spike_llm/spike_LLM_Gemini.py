@@ -32,11 +32,11 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 import httpx
-from pydantic import BaseModel, ValidationError
 from dotenv import load_dotenv
+from pydantic import BaseModel, ValidationError
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 load_dotenv()
 
