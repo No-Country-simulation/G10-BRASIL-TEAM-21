@@ -31,9 +31,14 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 import httpx
 from pydantic import BaseModel, ValidationError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # 1. Material de teste: um documento curto, já dividido em "chunks"
@@ -228,6 +233,10 @@ class Resposta:
     tokens_saida: int | None
 
 
+def _is_rate_limit(exception):
+    return isinstance(exception, httpx.HTTPStatusError) and exception.response.status_code == 429
+
+
 class Provedor:
     """Interface mínima. No projeto real isso vira a porta `LLMProvider` (ADR-0011)."""
 
@@ -240,8 +249,13 @@ class Provedor:
     def embeddings(self, textos: list[str]) -> list[list[float]]:
         raise NotImplementedError
 
+    @retry(
+        retry=retry_if_exception(_is_rate_limit),
+        wait=wait_exponential(multiplier=2, min=10, max=60),
+        stop=stop_after_attempt(3),
+        reraise=True,
+    )
     def _post(self, url: str, cabecalhos: dict, corpo: dict) -> dict:
-        # A chave vai no cabeçalho, nunca na URL: assim ela não aparece em mensagens de erro.
         resposta = httpx.post(url, headers=cabecalhos, json=corpo, timeout=self.cfg.timeout)
         resposta.raise_for_status()
         return resposta.json()
@@ -320,7 +334,8 @@ class Falso(Provedor):
     """
 
     def gerar(self, sistema: str, usuario: str) -> Resposta:
-        formato = re.search(r"Formato: (.+)", usuario).group(1).strip()
+        match = re.search(r"Formato: (.+)", usuario)
+        formato = match.group(1).strip() if match else "Flashcards"
         itens = [dict(FORMA_DO_ITEM[formato], fontes_chunks=[f"chunk-00{n}"]) for n in (1, 3)]
         corpo = {"titulo": "Título falso", "introducao_contextualizada": "...", "itens": itens}
         return Resposta(json.dumps(corpo, ensure_ascii=False), 100, 50)
@@ -408,7 +423,13 @@ def validar(formato: str, texto: str) -> dict:
 
 def rodar_cenario(prov: Provedor, c: Cenario) -> dict:
     sistema, usuario = montar_prompts(c)
-    linha = {"cenario": c.id, "perfil": c.perfil, "formato": c.formato, "nicho": c.nicho}
+    linha: dict[str, Any] = {
+        "cenario": c.id,
+        "perfil": c.perfil,
+        "formato": c.formato,
+        "nicho": c.nicho,
+    }
+
     inicio = time.perf_counter()
     try:
         resp = prov.gerar(sistema, usuario)
