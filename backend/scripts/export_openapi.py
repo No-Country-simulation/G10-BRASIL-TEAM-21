@@ -1,23 +1,19 @@
-"""Gera docs/openapi.json a partir do app FastAPI.
+"""Gera docs/openapi.json (contrato publicado para o front).
 
-Uso: python -m backend.scripts.export_openapi  (a partir da raiz do backend/)
+Uso, a partir de backend/:  python -m scripts.export_openapi
 """
 
 import json
 from pathlib import Path
 
-from app.main import app
+from app.main import create_app
 
 
 def main() -> None:
-    spec = app.openapi()
-    raiz = Path(__file__).resolve().parents[2]
-    destino = raiz / "docs" / "openapi.json"
+    destino = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
     destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text(
-        json.dumps(spec, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    spec = create_app().openapi()
+    destino.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"OpenAPI escrito em {destino}")
 
 
