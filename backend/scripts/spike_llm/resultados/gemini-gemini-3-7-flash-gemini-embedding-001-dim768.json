@@ -1,0 +1,77 @@
+{
+  "provedor": "gemini",
+  "modelo": "gemini-3.7-flash",
+  "cenarios": [
+    {
+      "cenario": "A",
+      "perfil": "Iniciante",
+      "formato": "Flashcards",
+      "nicho": "Geral",
+      "latencia_s": 60.15,
+      "http_status": null,
+      "json_ok": false,
+      "schema_ok": false,
+      "chunks_ok": false,
+      "n_itens": 0,
+      "tokens_entrada": null,
+      "tokens_saida": null,
+      "erro": "ReadTimeout: The read operation timed out"
+    },
+    {
+      "cenario": "B",
+      "perfil": "Desenvolvedor Pleno",
+      "formato": "Quiz",
+      "nicho": "Fintech",
+      "latencia_s": 23.31,
+      "http_status": 503,
+      "json_ok": false,
+      "schema_ok": false,
+      "chunks_ok": false,
+      "n_itens": 0,
+      "tokens_entrada": null,
+      "tokens_saida": null,
+      "erro": "HTTP 503: {   \"error\": {     \"code\": 503,     \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",     \"status\": \"UNAVAILABLE\"   } } "
+    },
+    {
+      "cenario": "C",
+      "perfil": "Gestor/Executivo",
+      "formato": "Resumo Executivo",
+      "nicho": "Saude",
+      "latencia_s": 50.24,
+      "http_status": 200,
+      "tokens_entrada": 598,
+      "tokens_saida": 835,
+      "json_ok": true,
+      "schema_ok": true,
+      "chunks_ok": true,
+      "n_itens": 4,
+      "erro": ""
+    }
+  ],
+  "embeddings": {
+    "ok": true,
+    "dimensao": 768,
+    "dimensao_consistente": true,
+    "latencia_s": 3.8,
+    "textos_no_lote": 9,
+    "acertos_top1": 2,
+    "total_perguntas": 3,
+    "detalhes": [
+      {
+        "pergunta": "Como recursos de uma sub-rede privada acessam a internet sem ficar expostos?",
+        "esperado": "chunk-004",
+        "obtido": "chunk-003"
+      },
+      {
+        "pergunta": "Qual faixa de endereços define o tamanho da rede?",
+        "esperado": "chunk-002",
+        "obtido": "chunk-002"
+      },
+      {
+        "pergunta": "O que controla quais portas e origens podem acessar um recurso?",
+        "esperado": "chunk-006",
+        "obtido": "chunk-006"
+      }
+    ]
+  }
+}
