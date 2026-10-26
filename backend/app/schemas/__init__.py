@@ -1,1 +1,1 @@
-"""Schemas Pydantic — contrato público da API (v1.1)."""
+"""Schemas Pydantic: contrato publico da API (versao_schema 1.0)."""

@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
+VERSAO_SCHEMA = "1.0"
+
 
 class ErroDetalhe(BaseModel):
     model_config = ConfigDict(extra="forbid")

@@ -1,16 +1,43 @@
 from fastapi import APIRouter, Depends, Query, Request
 
 from ..schemas.common import ErroResposta
-from ..schemas.documentos import DocumentoResponse
+from ..schemas.documentos import DocumentoCreateTexto, DocumentoResponse
 from ..schemas.listagens import DocumentosListResponse
 from ._deps import get_current_user_stub
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 ERR = {501: {"model": ErroResposta}}
+CORPO_DOCUMENTO = {
+    "requestBody": {
+        "required": True,
+        "content": {
+            "multipart/form-data": {
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "arquivo": {
+                            "type": "string",
+                            "format": "binary",
+                            "description": "PDF, Markdown ou TXT.",
+                        }
+                    },
+                    "required": ["arquivo"],
+                }
+            },
+            "application/json": {"schema": DocumentoCreateTexto.model_json_schema()},
+        },
+    }
+}
 
 
-@router.post("", response_model=DocumentoResponse, status_code=201, responses=ERR)
+@router.post(
+    "",
+    response_model=DocumentoResponse,
+    status_code=201,
+    responses=ERR,
+    openapi_extra=CORPO_DOCUMENTO,
+)
 async def criar_documento(
     request: Request,
     _: dict = Depends(get_current_user_stub),
