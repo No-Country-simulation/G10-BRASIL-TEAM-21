@@ -22,6 +22,12 @@ jobs:
           work='^(feat|fix|docs|test|refactor|chore)/(back|front|agent|docs|infra|ci)-[a-z0-9]+(-[a-z0-9]+)*$'
           hotfix='^hotfix/[a-z0-9]+(-[a-z0-9]+)*$'
 
+          # Aceita branches automáticas do Dependabot
+          if [[ "$HEAD" == dependabot/* ]]; then
+            echo "Branch do Dependabot aceita: $HEAD"
+            exit 0
+          fi
+          
           case "$BASE" in
             main)
               if [[ "$HEAD" == "homolog" || "$HEAD" =~ $hotfix ]]; then exit 0; fi
