@@ -38,9 +38,20 @@ py-modules = []
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query",
+  "fastapi.Path",
+  "fastapi.Body",
+  "fastapi.Header",
+  "fastapi.Cookie",
+  "fastapi.Form",
+  "fastapi.File",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+ignore = ["UP042"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
