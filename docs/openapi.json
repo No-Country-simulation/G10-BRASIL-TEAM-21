@@ -34,8 +34,18 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -85,8 +95,18 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -118,16 +138,6 @@
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -155,8 +165,18 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -396,11 +416,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Quiz: inclui resposta_correta e justificativa na resposta.",
               "default": false,
               "title": "Incluir Gabarito"
-            },
-            "description": "Quiz: inclui resposta_correta e justificativa na resposta."
+            }
           },
           {
             "name": "forcar_reprocessamento",
@@ -408,11 +426,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Ignora o cache por hash e força a execução do grafo (RN-20).",
               "default": false,
               "title": "Forcar Reprocessamento"
-            },
-            "description": "Ignora o cache por hash e força a execução do grafo (RN-20)."
+            }
           }
         ],
         "requestBody": {

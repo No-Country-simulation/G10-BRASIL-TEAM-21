@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import create_app
+from app.api._deps import get_current_user  # <-- Adicione essa linha inteira
+from app.main import app, create_app  # <-- Adicione o create_app aqui
 
 CHAVES = {"status", "codigo", "mensagem", "detalhes", "request_id"}
 AUTH = {"Authorization": "Bearer qualquer"}
@@ -15,7 +16,7 @@ BASE = {
 
 @pytest.fixture
 def client():
-    return TestClient(create_app())
+    return TestClient(app)  # <-- MUDOU AQUI
 
 
 def _confere(r, status, codigo):
@@ -36,6 +37,8 @@ def test_501_nas_rotas_casca(client):
 
 
 def test_401_sem_token(client):
+    # Para esse teste dar 401, precisamos remover o mock temporariamente
+    app.dependency_overrides.pop(get_current_user, None)
     _confere(client.get("/api/v1/perfil"), 401, "NAO_AUTENTICADO")
 
 
@@ -68,13 +71,13 @@ def test_documento_id_sozinho_chega_no_501(client):
 
 
 def test_500_formato_padrao():
-    app = create_app()
+    app_erro = create_app()
 
-    @app.get("/boom")
+    @app_erro.get("/boom")
     def boom():
         raise RuntimeError("segredo interno")
 
-    r = TestClient(app, raise_server_exceptions=False).get("/boom")
+    r = TestClient(app_erro, raise_server_exceptions=False).get("/boom")
     _confere(r, 500, "ERRO_INTERNO")
     assert "segredo interno" not in r.text
 

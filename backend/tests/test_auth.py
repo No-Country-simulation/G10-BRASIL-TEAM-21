@@ -27,6 +27,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 Base.metadata.create_all(bind=engine, tables=[cast(Table, Usuario.__table__)])
 
+
 def override_get_db():
     db = TestingSessionLocal()
     try:
@@ -34,7 +35,9 @@ def override_get_db():
     finally:
         db.close()
 
+
 app.dependency_overrides[get_db] = override_get_db
+
 
 # Apaga o arquivo do banco após rodar todos os testes
 @pytest.fixture(scope="session", autouse=True)
@@ -46,7 +49,8 @@ def cleanup_db_file():
         try:
             os.remove("./test_auth.db")
         except PermissionError:
-            pass # Se o Windows travar, a gente ignora (o CI do Linux não trava)
+            pass  # Se o Windows travar, a gente ignora (o CI do Linux não trava)
+
 
 # ==========================================
 # 2. TESTES DAS FUNÇÕES DE SEGURANÇA (Unitários)
@@ -59,6 +63,7 @@ def test_hash_e_verificacao_de_senha():
     assert verificar_senha(senha, senha_hash) is True
     assert verificar_senha("senhaErrada", senha_hash) is False
 
+
 def test_geracao_e_decodificacao_de_token():
     usuario_id = uuid.UUID("123e4567-e89b-12d3-a456-426614174000")
     token = criar_token_jwt(usuario_id)
@@ -68,6 +73,7 @@ def test_geracao_e_decodificacao_de_token():
     assert id_decodificado == usuario_id
 
     assert decodificar_token("token.falso.aqui") is None
+
 
 # ==========================================
 # 3. TESTES DAS ROTAS DE API
@@ -81,6 +87,7 @@ def limpar_banco():
     db.close()
     yield
 
+
 def test_fluxo_completo_de_auth():
     # Instancia o client DENTRO do teste para evitar vazamento de threads
     with TestClient(app) as client:
@@ -89,7 +96,7 @@ def test_fluxo_completo_de_auth():
             "nome": "Usuario Teste",
             "email": "teste@adaptai.com",
             "senha": "senha12345",
-            "nivel_declarado": "Iniciante"
+            "nivel_declarado": "Iniciante",
         }
         response = client.post("/api/v1/auth/cadastro", json=payload_cadastro)
         assert response.status_code == 201
@@ -120,4 +127,3 @@ def test_fluxo_completo_de_auth():
 
         assert response_me.status_code == 200
         assert response_me.json()["email"] == "teste@adaptai.com"
-
