@@ -1,11 +1,12 @@
 from typing import Any
+
 from fastapi import APIRouter, Depends, Query, Request
 
+from ..infra.db.models import Usuario
 from ..schemas.common import ErroResposta
 from ..schemas.documentos import DocumentoCreateTexto, DocumentoResponse
 from ..schemas.listagens import DocumentosListResponse
 from ._deps import get_current_user
-from ..infra.db.models import Usuario
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])

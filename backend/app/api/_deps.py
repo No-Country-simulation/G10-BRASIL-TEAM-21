@@ -4,9 +4,9 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from ..infra.db.session import get_db
-from ..infra.db.models import Usuario
 from ..core.security import decodificar_token
+from ..infra.db.models import Usuario
+from ..infra.db.session import get_db
 from ._errors import ErroApi
 
 security = HTTPBearer(auto_error=False)

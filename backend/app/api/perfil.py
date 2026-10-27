@@ -1,10 +1,11 @@
 from typing import Any
+
 from fastapi import APIRouter, Depends
 
+from ..infra.db.models import Usuario
 from ..schemas.common import ErroResposta
 from ..schemas.perfil import PerfilResponse
 from ._deps import get_current_user
-from ..infra.db.models import Usuario
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/perfil", tags=["perfil"])

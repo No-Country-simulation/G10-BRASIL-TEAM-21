@@ -1,6 +1,8 @@
 from typing import Any
+
 from fastapi import APIRouter, Depends
 
+from ..infra.db.models import Usuario
 from ..schemas.common import ErroResposta
 from ..schemas.perfil import (
     RespostasTesteRequest,
@@ -8,7 +10,6 @@ from ..schemas.perfil import (
     TesteNivelResponse,
 )
 from ._deps import get_current_user
-from ..infra.db.models import Usuario
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/testes-nivel", tags=["testes-nivel"])
