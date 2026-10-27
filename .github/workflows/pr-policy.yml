@@ -19,7 +19,7 @@ jobs:
           BASE: ${{ github.base_ref }}
           HEAD: ${{ github.head_ref }}
         run: |
-          work='^(feat|fix|docs|test|refactor|chore)/(back|front|agent|docs|infra)-[a-z0-9]+(-[a-z0-9]+)*$'
+          work='^(feat|fix|docs|test|refactor|chore)/(back|front|agent|docs|infra|ci)-[a-z0-9]+(-[a-z0-9]+)*$'
           hotfix='^hotfix/[a-z0-9]+(-[a-z0-9]+)*$'
 
           case "$BASE" in
@@ -34,7 +34,7 @@ jobs:
               exit 1 ;;
             dev)
               # homolog/main -> dev é a volta do hotfix
-              if [[ "$HEAD" == "homolog" || "$HEAD" == "main" || "$HEAD" =~ $hotfix || "$HEAD" =~ $work ]]; then exit 0; fi
+              if [[ "$HEAD" == "homolog" || "$HEAD" == "main" || "$HEAD" =~ $hotfix || "$HEAD" =~ $work || "$HEAD" == dependabot/* ]]; then exit 0; fi
               echo "::error::Nome de branch fora do padrão '<tipo>/<area>-<assunto>': $HEAD"
               echo "Tipos: feat|fix|docs|test|refactor|chore · Áreas: back|front|agent|docs|infra"
               echo "Exemplo: feat/back-upload-documento"
