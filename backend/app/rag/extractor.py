@@ -4,6 +4,7 @@ from io import BytesIO
 
 import pdfplumber
 
+
 class FormatoNaoSuportadoError(ValueError):
     """Indica que o arquivo enviado não é PDF nem TXT."""
 

@@ -2,7 +2,6 @@ import hashlib
 import logging
 import uuid
 
-import pdfplumber
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from pdfminer.pdfparser import PDFSyntaxError
 from sqlalchemy.orm import Session
