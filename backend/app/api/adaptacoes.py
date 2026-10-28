@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 
 from ..schemas.adaptacao import AdaptacaoRequest, AdaptacaoResponse
@@ -8,7 +10,7 @@ from ._deps import get_current_user_stub
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/adaptacoes", tags=["adaptacoes"])
-ERR = {501: {"model": ErroResposta}}
+ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 
 @router.post("", response_model=AdaptacaoResponse, responses=ERR)

@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from pdfminer.pdfparser import PDFSyntaxError
@@ -23,7 +24,9 @@ from ._errors import ErroApi, NaoImplementadoError
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 logger = logging.getLogger(__name__)
-ERR = {501: {"model": ErroResposta}}
+
+ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
+
 CORPO_DOCUMENTO = {
     "requestBody": {
         "required": True,
