@@ -20,7 +20,7 @@ from app.schemas.enums import (
     PerfilSaida,
     StatusUpload,
 )
-from app.schemas.itens import Alternativa, ItemFlashcard, ItemQuiz  # <-- Importei Alternativa
+from app.schemas.itens import Alternativa, ItemFlashcard, ItemQuiz
 
 
 def _metadados(formato: FormatoSaida) -> Metadados:
@@ -87,7 +87,6 @@ def test_flashcard_com_item_flashcard_ok():
     )
     assert resp.cache_hit is False
 
-    # O isinstance avisa ao VS Code que o item é um Flashcard antes de acessar o .frente
     item_gerado = resp.conteudo_adaptado.itens[0]
     assert isinstance(item_gerado, ItemFlashcard)
     assert item_gerado.frente == "f"
@@ -96,7 +95,6 @@ def test_flashcard_com_item_flashcard_ok():
 def test_flashcard_com_item_quiz_falha():
     item_errado = ItemQuiz(
         pergunta="p",
-        # Instanciando o objeto Alternativa em vez de passar um dicionário
         alternativas=[Alternativa(id="a", texto="A")],
         resposta_correta="a",
         justificativa="j",
@@ -145,11 +143,17 @@ def test_ocultar_gabarito_remove_resposta_e_justificativa():
             itens=[_quiz_item(resposta_correta="a", justificativa="j")],
         ),
         avaliacao_qualidade=_avaliacao(),
-        armazenamento_oci=_armazenamento(),  # criado no passo 3
+        armazenamento_oci=_armazenamento(),
     )
-    item = ocultar_gabarito(resp).conteudo_adaptado.itens[0]
-    assert item.resposta_correta is None and item.justificativa is None
-    assert resp.conteudo_adaptado.itens[0].resposta_correta == "a"  # original intacto
+
+    # O VS Code estava reclamando aqui. O isinstance resolve.
+    item_oculto = ocultar_gabarito(resp).conteudo_adaptado.itens[0]
+    assert isinstance(item_oculto, ItemQuiz)
+    assert item_oculto.resposta_correta is None and item_oculto.justificativa is None
+
+    item_original = resp.conteudo_adaptado.itens[0]
+    assert isinstance(item_original, ItemQuiz)
+    assert item_original.resposta_correta == "a"  # original intacto
 
 
 def test_armazenamento_oci_e_obrigatorio():

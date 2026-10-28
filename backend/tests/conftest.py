@@ -1,17 +1,38 @@
+import os
 import uuid
 
 import pytest
-from sqlalchemy import create_engine, inspect
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
-from app.infra.db.models import Adaptacao, Documento, Usuario
+load_dotenv()
+
+# A MÁGICA: Se não tem DATABASE_URL, usa SQLite local
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+    os.environ["JWT_SECRET"] = "chave-super-secreta-de-teste-123456"
+    os.environ["JWT_EXPIRA_MIN"] = "60"
+
+from app.api._deps import get_current_user  # noqa: E402
+from app.config import get_settings  # noqa: E402
+from app.infra.db.models import Adaptacao, Base, Documento, Usuario  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "integration: depende do PostgreSQL do Compose")
     config.addinivalue_line("markers", "migration: roda alembic em banco descartavel")
+
+
+# A MÁGICA 2: Pula os testes de integração se estiver usando SQLite local
+def pytest_collection_modifyitems(config, items):
+    if "sqlite" in os.environ.get("DATABASE_URL", ""):
+        skip_integration = pytest.mark.skip(reason="Requer PostgreSQL (Rode via Docker)")
+        for item in items:
+            if "integration" in item.keywords:
+                item.add_marker(skip_integration)
 
 
 @pytest.fixture(scope="session")
@@ -21,16 +42,17 @@ def engine():
         with eng.connect():
             pass
     except OperationalError:
-        pytest.skip("PostgreSQL indisponivel (docker compose up -d db)")
-    if not inspect(eng).has_table("usuarios"):
-        pytest.skip("Banco sem tabelas (docker compose exec backend alembic upgrade head)")
+        pytest.skip("Banco indisponivel")
+
+    if "sqlite" in str(eng.url):
+        Base.metadata.create_all(bind=eng)
+
     yield eng
     eng.dispose()
 
 
 @pytest.fixture
 def db_session(engine):
-    """Cada teste roda numa transacao externa descartada no fim: nada vai para o banco de dev."""
     conexao = engine.connect()
     transacao = conexao.begin()
     sessao = Session(bind=conexao, join_transaction_mode="create_savepoint")
@@ -84,3 +106,16 @@ def adaptacao_factory(db_session, usuario):
         return a
 
     return _criar
+
+
+@pytest.fixture(autouse=True)
+def mock_auth():
+    fake_user = Usuario(
+        usuario_id=uuid.UUID("123e4567-e89b-12d3-a456-426614174000"),
+        nome="Teste",
+        email="teste@teste.com",
+        nivel_declarado="Iniciante",
+    )
+    app.dependency_overrides[get_current_user] = lambda: fake_user
+    yield
+    app.dependency_overrides.clear()
