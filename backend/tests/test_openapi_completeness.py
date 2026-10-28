@@ -59,7 +59,8 @@ def test_post_documentos_documenta_o_corpo():
 
 
 def test_openapi_commitado_esta_atualizado():
-    arquivo = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
+    # parents[1] sobe de 'tests' para 'backend' e procura em backend/docs
+    arquivo = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
     if not arquivo.exists():
         pytest.skip("docs/openapi.json fora do container; rode no host ou no CI")
     assert json.loads(arquivo.read_text(encoding="utf-8")) == create_app().openapi(), (

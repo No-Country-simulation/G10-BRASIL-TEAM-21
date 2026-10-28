@@ -12,7 +12,6 @@ from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/adaptacoes", tags=["adaptacoes"])
 
-# Correção do Lint aqui:
 ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 

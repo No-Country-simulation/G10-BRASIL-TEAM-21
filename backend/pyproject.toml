@@ -26,6 +26,8 @@ dependencies = [
   "alembic>=1.13,<2",
   "psycopg[binary]>=3.2,<4",
   "pgvector>=0.3,<1",
+  "pdfplumber>=0.11,<1",
+  "pdfminer.six>=20231228",
 ]
 
 [project.optional-dependencies]

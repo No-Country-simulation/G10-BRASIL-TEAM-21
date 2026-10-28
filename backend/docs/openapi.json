@@ -34,8 +34,18 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -85,8 +95,18 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -118,16 +138,6 @@
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -155,12 +165,69 @@
               }
             }
           },
-          "501": {
-            "description": "Not Implemented",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/documentos/upload": {
+      "post": {
+        "tags": [
+          "documentos"
+        ],
+        "summary": "Upload Documento",
+        "description": "Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks.",
+        "operationId": "upload_documento_api_v1_documentos_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_documento_api_v1_documentos_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadDocumentoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -396,11 +463,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Quiz: inclui resposta_correta e justificativa na resposta.",
               "default": false,
               "title": "Incluir Gabarito"
-            },
-            "description": "Quiz: inclui resposta_correta e justificativa na resposta."
+            }
           },
           {
             "name": "forcar_reprocessamento",
@@ -408,11 +473,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Ignora o cache por hash e força a execução do grafo (RN-20).",
               "default": false,
               "title": "Forcar Reprocessamento"
-            },
-            "description": "Ignora o cache por hash e força a execução do grafo (RN-20)."
+            }
           }
         ],
         "requestBody": {
@@ -1257,6 +1320,20 @@
         ],
         "title": "BlocoMicrolearning"
       },
+      "Body_upload_documento_api_v1_documentos_upload_post": {
+        "properties": {
+          "arquivo": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Arquivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "arquivo"
+        ],
+        "title": "Body_upload_documento_api_v1_documentos_upload_post"
+      },
       "CadastroRequest": {
         "properties": {
           "nome": {
@@ -1317,6 +1394,30 @@
           "nivel_atual"
         ],
         "title": "CadastroResponse"
+      },
+      "ChunkIngeridoResponse": {
+        "properties": {
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "ordem": {
+            "type": "integer",
+            "title": "Ordem"
+          },
+          "texto": {
+            "type": "string",
+            "title": "Texto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chunk_id",
+          "ordem",
+          "texto"
+        ],
+        "title": "ChunkIngeridoResponse",
+        "description": "Chunk extraído durante o upload; não implica persistência do bloco."
       },
       "ClassificadorUsado": {
         "type": "string",
@@ -2583,6 +2684,49 @@
           "teste_nivel_disponivel"
         ],
         "title": "TrilhaResumo"
+      },
+      "UploadDocumentoResponse": {
+        "properties": {
+          "documento_id": {
+            "type": "string",
+            "title": "Documento Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "tamanho_bytes": {
+            "type": "integer",
+            "title": "Tamanho Bytes"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Upload"
+          },
+          "total_chunks": {
+            "type": "integer",
+            "title": "Total Chunks"
+          },
+          "chunks": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkIngeridoResponse"
+            },
+            "type": "array",
+            "title": "Chunks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "documento_id",
+          "nome",
+          "tamanho_bytes",
+          "data_upload",
+          "total_chunks",
+          "chunks"
+        ],
+        "title": "UploadDocumentoResponse",
+        "description": "Resultado da extração, chunking e registro dos metadados."
       },
       "UsuarioMeResponse": {
         "properties": {

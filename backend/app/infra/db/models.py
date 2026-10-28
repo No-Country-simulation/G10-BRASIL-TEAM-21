@@ -76,6 +76,7 @@ class Documento(Base):
     objeto_oci: Mapped[str] = mapped_column(String(1000), nullable=False, default="")
     status_upload: Mapped[str] = mapped_column(String(20), nullable=False, default="pendente")
     hash_conteudo: Mapped[str] = mapped_column(String(64), nullable=False)
+    tamanho_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     nivel_documento_estimado: Mapped[str | None] = mapped_column(String(30), nullable=True)
     dominio_conhecimento: Mapped[str | None] = mapped_column(String(30), nullable=True)
     classificador_usado: Mapped[str | None] = mapped_column(String(20), nullable=True)

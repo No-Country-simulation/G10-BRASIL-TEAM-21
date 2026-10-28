@@ -20,6 +20,25 @@ class DocumentoCreateTexto(BaseModel):
     conteudo: str
 
 
+class ChunkIngeridoResponse(BaseModel):
+    """Chunk extraído durante o upload; não implica persistência do bloco."""
+
+    chunk_id: str
+    ordem: int
+    texto: str
+
+
+class UploadDocumentoResponse(BaseModel):
+    """Resultado da extração, chunking e registro dos metadados."""
+
+    documento_id: str
+    nome: str
+    tamanho_bytes: int
+    data_upload: datetime
+    total_chunks: int
+    chunks: list[ChunkIngeridoResponse]
+
+
 class DocumentoResponse(BaseModel):
     """Saída de POST /documentos."""
 
