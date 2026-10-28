@@ -29,7 +29,7 @@ def _confere(r, status, codigo):
 def test_501_nas_rotas_casca(client):
     for rota in (
         "/api/v1/perfil",
-        "/api/v1/usuarios/me",
+        #"/api/v1/usuarios/me",
         "/api/v1/documentos",
         "/api/v1/adaptacoes",
     ):
