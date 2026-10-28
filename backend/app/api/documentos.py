@@ -1,7 +1,5 @@
-<<<<<<< HEAD
 import hashlib
 import logging
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
@@ -9,16 +7,9 @@ from pdfminer.pdfparser import PDFSyntaxError
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..infra.db.models import Documento
+from ..infra.db.models import Documento, Usuario
 from ..rag.chunker import dividir_em_chunks
 from ..rag.extractor import FormatoNaoSuportadoError, extrair_texto
-=======
-from typing import Any
-
-from fastapi import APIRouter, Depends, Query, Request
-
-from ..infra.db.models import Usuario
->>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
 from ..schemas.common import ErroResposta
 from ..schemas.documentos import (
     ChunkIngeridoResponse,
@@ -27,18 +18,11 @@ from ..schemas.documentos import (
     UploadDocumentoResponse,
 )
 from ..schemas.listagens import DocumentosListResponse
-<<<<<<< HEAD
-from ._deps import get_current_user_stub, get_db
+from ._deps import get_current_user, get_db
 from ._errors import ErroApi, NaoImplementadoError
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 logger = logging.getLogger(__name__)
-=======
-from ._deps import get_current_user
-from ._errors import NaoImplementadoError
-
-router = APIRouter(prefix="/documentos", tags=["documentos"])
->>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
 
 ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
@@ -68,7 +52,7 @@ CORPO_DOCUMENTO = {
 @router.post("/upload", response_model=UploadDocumentoResponse, status_code=201)
 async def upload_documento(
     arquivo: UploadFile = File(...),
-    usuario: dict = Depends(get_current_user_stub),
+    current_user: Usuario = Depends(get_current_user),  # Correção: usando o Auth real
     db: Session = Depends(get_db),
 ) -> UploadDocumentoResponse:
     """Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks."""
@@ -88,14 +72,10 @@ async def upload_documento(
     except (PDFSyntaxError, UnicodeDecodeError, ValueError) as exc:
         raise ErroApi(400, "ARQUIVO_INVALIDO", "Não foi possível ler o arquivo enviado.") from exc
 
-    try:
-        usuario_id = uuid.UUID(str(usuario["usuario_id"]))
-    except (KeyError, ValueError) as exc:
-        raise ErroApi(401, "NAO_AUTENTICADO", "Usuário autenticado inválido.") from exc
-
+    # Correção: Pega o ID direto do objeto current_user
     chunks = dividir_em_chunks(texto)
     documento = Documento(
-        usuario_id=usuario_id,
+        usuario_id=current_user.usuario_id,
         titulo=nome,
         formato_origem="pdf" if nome.lower().endswith(".pdf") else "texto",
         hash_conteudo=hashlib.sha256(conteudo).hexdigest(),
@@ -142,7 +122,6 @@ async def criar_documento(
     request: Request,
     current_user: Usuario = Depends(get_current_user),
 ) -> DocumentoResponse:
-    # Aceita multipart/form-data (campo `arquivo`) OU JSON DocumentoCreateTexto.
     raise NaoImplementadoError()
 
 

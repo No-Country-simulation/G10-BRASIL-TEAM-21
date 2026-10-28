@@ -11,11 +11,7 @@ from ._deps import get_current_user
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/adaptacoes", tags=["adaptacoes"])
-<<<<<<< HEAD
-=======
 
-# Correção do Lint aqui:
->>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
 ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 

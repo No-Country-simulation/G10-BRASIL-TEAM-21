@@ -4,23 +4,16 @@ import json
 import os
 from pathlib import Path
 
-# A MÁGICA: Só define se a variável não existir no ambiente!
 if "DATABASE_URL" not in os.environ:
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     os.environ["JWT_SECRET"] = "chave-super-secreta-de-teste-123456"
     os.environ["JWT_EXPIRA_MIN"] = "60"
 
-# ADICIONE O # noqa: E402 NO FINAL DESSA LINHA:
 from app.main import create_app  # noqa: E402
 
 
 def main() -> None:
-<<<<<<< HEAD
-    # parents[1] sobe de 'scripts' para 'backend' e salva em backend/docs
     destino = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
-=======
-    destino = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
->>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     spec = create_app().openapi()
