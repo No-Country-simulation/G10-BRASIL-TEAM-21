@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import hashlib
 import logging
 import uuid
@@ -11,6 +12,13 @@ from ..config import get_settings
 from ..infra.db.models import Documento
 from ..rag.chunker import dividir_em_chunks
 from ..rag.extractor import FormatoNaoSuportadoError, extrair_texto
+=======
+from typing import Any
+
+from fastapi import APIRouter, Depends, Query, Request
+
+from ..infra.db.models import Usuario
+>>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
 from ..schemas.common import ErroResposta
 from ..schemas.documentos import (
     ChunkIngeridoResponse,
@@ -19,11 +27,18 @@ from ..schemas.documentos import (
     UploadDocumentoResponse,
 )
 from ..schemas.listagens import DocumentosListResponse
+<<<<<<< HEAD
 from ._deps import get_current_user_stub, get_db
 from ._errors import ErroApi, NaoImplementadoError
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 logger = logging.getLogger(__name__)
+=======
+from ._deps import get_current_user
+from ._errors import NaoImplementadoError
+
+router = APIRouter(prefix="/documentos", tags=["documentos"])
+>>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
 
 ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
@@ -125,7 +140,7 @@ async def upload_documento(
 )
 async def criar_documento(
     request: Request,
-    _: dict = Depends(get_current_user_stub),
+    current_user: Usuario = Depends(get_current_user),
 ) -> DocumentoResponse:
     # Aceita multipart/form-data (campo `arquivo`) OU JSON DocumentoCreateTexto.
     raise NaoImplementadoError()
@@ -135,7 +150,7 @@ async def criar_documento(
 async def listar_documentos(
     limite: int = Query(20, ge=1, le=100),
     deslocamento: int = Query(0, ge=0),
-    _: dict = Depends(get_current_user_stub),
+    current_user: Usuario = Depends(get_current_user),
 ) -> DocumentosListResponse:
     raise NaoImplementadoError()
 
@@ -143,6 +158,6 @@ async def listar_documentos(
 @router.get("/{documento_id}", response_model=DocumentoResponse, responses=ERR)
 async def obter_documento(
     documento_id: str,
-    _: dict = Depends(get_current_user_stub),
+    current_user: Usuario = Depends(get_current_user),
 ) -> DocumentoResponse:
     raise NaoImplementadoError()

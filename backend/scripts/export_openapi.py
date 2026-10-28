@@ -15,8 +15,12 @@ from app.main import create_app  # noqa: E402
 
 
 def main() -> None:
+<<<<<<< HEAD
     # parents[1] sobe de 'scripts' para 'backend' e salva em backend/docs
     destino = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
+=======
+    destino = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
+>>>>>>> 3fa24d2ac091b9d2e90fa0415042de11f3baff2e
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     spec = create_app().openapi()

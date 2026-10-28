@@ -1,4 +1,4 @@
-"""App FastAPI do AdaptAI. Stubs de T1: rotas retornam 501 até semana 2."""
+"""App FastAPI do AdaptAI."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +26,7 @@ def create_app() -> FastAPI:
 
     api_prefix = "/api/v1"
     app.include_router(auth.router, prefix=api_prefix)
-    app.include_router(auth.usuarios_router, prefix=api_prefix)
+    app.include_router(auth.usuarios_router, prefix=api_prefix)  # Rota do /me
     app.include_router(documentos.router, prefix=api_prefix)
     app.include_router(adaptacoes.router, prefix=api_prefix)
     app.include_router(perfil.router, prefix=api_prefix)
