@@ -1,5 +1,6 @@
 import hashlib
 
+
 def gerar_chunk_id(texto_chunk: str, document_id: str, chunk_index: int) -> str:
     """
     Gera um ID determinístico para um chunk.

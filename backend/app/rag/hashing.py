@@ -1,6 +1,6 @@
 # backend/app/rag/hashing.py
 import hashlib
-from typing import Optional
+
 
 def gerar_chunk_id(
     texto_chunk: str,

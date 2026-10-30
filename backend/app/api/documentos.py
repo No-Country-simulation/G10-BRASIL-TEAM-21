@@ -1,4 +1,3 @@
-import hashlib
 import logging
 from typing import Any
 
@@ -7,9 +6,8 @@ from pdfminer.pdfparser import PDFSyntaxError
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..infra.db.models import Documento, Usuario
-from ..rag.chunker import dividir_em_chunks
-from ..rag.extractor import FormatoNaoSuportadoError, extrair_texto
+from ..infra.db.models import Usuario
+from ..rag.extractor import FormatoNaoSuportadoError
 from ..schemas.common import ErroResposta
 from ..schemas.documentos import (
     ChunkIngeridoResponse,
@@ -18,6 +16,7 @@ from ..schemas.documentos import (
     UploadDocumentoResponse,
 )
 from ..schemas.listagens import DocumentosListResponse
+from ..services.ingestao import processar_documento
 from ._deps import get_current_user, get_db
 from ._errors import ErroApi, NaoImplementadoError
 
@@ -52,7 +51,7 @@ CORPO_DOCUMENTO = {
 @router.post("/upload", response_model=UploadDocumentoResponse, status_code=201)
 async def upload_documento(
     arquivo: UploadFile = File(...),
-    current_user: Usuario = Depends(get_current_user),  # Correção: usando o Auth real
+    current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UploadDocumentoResponse:
     """Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks."""
@@ -60,53 +59,37 @@ async def upload_documento(
     if not nome:
         raise ErroApi(400, "REQUISICAO_INVALIDA", "O arquivo precisa ter um nome.")
 
+    # Valida o tamanho do arquivo (pega do .env)
     limite_bytes = get_settings().max_upload_mb * 1024 * 1024
     conteudo = await arquivo.read(limite_bytes + 1)
+
     if len(conteudo) > limite_bytes:
         raise ErroApi(400, "ARQUIVO_MUITO_GRANDE", "O arquivo excede o limite de upload.")
 
     try:
-        texto = extrair_texto(conteudo, nome)
+        # Chama o serviço para fazer o trabalho pesado
+        doc, chunks = processar_documento(
+            file=arquivo, conteudo=conteudo, db=db, usuario_id=str(current_user.usuario_id)
+        )
     except FormatoNaoSuportadoError as exc:
         raise ErroApi(400, "FORMATO_NAO_SUPORTADO", str(exc)) from exc
     except (PDFSyntaxError, UnicodeDecodeError, ValueError) as exc:
         raise ErroApi(400, "ARQUIVO_INVALIDO", "Não foi possível ler o arquivo enviado.") from exc
+    except Exception as exc:
+        logger.error("Erro ao processar documento: %s", str(exc))
+        raise ErroApi(500, "ERRO_INTERNO", "Erro ao processar o documento.") from exc
 
-    # Correção: Pega o ID direto do objeto current_user
-    chunks = dividir_em_chunks(texto)
-    documento = Documento(
-        usuario_id=current_user.usuario_id,
-        titulo=nome,
-        formato_origem="pdf" if nome.lower().endswith(".pdf") else "texto",
-        hash_conteudo=hashlib.sha256(conteudo).hexdigest(),
-        tamanho_bytes=len(conteudo),
-        status_upload="concluido",
-    )
-    db.add(documento)
-    db.commit()
-    db.refresh(documento)
+    logger.info("Documento ingerido: id=%s | total chunks=%d", doc.documento_id, len(chunks))
 
-    logger.info(
-        "Documento ingerido: id=%s nome=%s tamanho_bytes=%d chunks=%d",
-        documento.documento_id,
-        nome,
-        len(conteudo),
-        len(chunks),
-    )
-    logger.info(
-        "Chunk IDs gerados para %s: %s",
-        documento.documento_id,
-        [chunk.chunk_id for chunk in chunks],
-    )
+    # Monta a resposta usando os schemas
     return UploadDocumentoResponse(
-        documento_id=str(documento.documento_id),
-        nome=nome,
-        tamanho_bytes=len(conteudo),
-        data_upload=documento.criado_em,
+        documento_id=str(doc.documento_id),
+        nome=doc.titulo,
+        tamanho_bytes=doc.tamanho_bytes,
+        data_upload=doc.criado_em,
         total_chunks=len(chunks),
         chunks=[
-            ChunkIngeridoResponse(chunk_id=chunk.chunk_id, ordem=chunk.ordem, texto=chunk.texto)
-            for chunk in chunks
+            ChunkIngeridoResponse(chunk_id=c.chunk_id, ordem=c.ordem, texto=c.texto) for c in chunks
         ],
     )
 
