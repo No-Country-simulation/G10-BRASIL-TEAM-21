@@ -1,8 +1,12 @@
 """T1.8 — todas as rotas da seção 2 do contrato aparecem no OpenAPI."""
 
+import json
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import app, create_app
 
 client = TestClient(app)
 
@@ -43,3 +47,22 @@ def test_schemas_chave_estao_no_openapi():
     schemas = spec["components"]["schemas"]
     for nome in ("AdaptacaoResponse", "AdaptacaoRequest", "DocumentoResponse", "ErroResposta"):
         assert nome in schemas, f"Schema {nome} ausente"
+
+
+def test_post_documentos_documenta_o_corpo():
+    spec = client.get("/openapi.json").json()
+    corpo = spec["paths"]["/api/v1/documentos"]["post"]["requestBody"]
+    assert corpo["required"] is True
+    assert set(corpo["content"]) == {"multipart/form-data", "application/json"}
+    json_schema = corpo["content"]["application/json"]["schema"]
+    assert set(json_schema["required"]) == {"titulo", "conteudo"}
+
+
+def test_openapi_commitado_esta_atualizado():
+    # parents[1] sobe de 'tests' para 'backend' e procura em backend/docs
+    arquivo = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
+    if not arquivo.exists():
+        pytest.skip("docs/openapi.json fora do container; rode no host ou no CI")
+    assert json.loads(arquivo.read_text(encoding="utf-8")) == create_app().openapi(), (
+        "docs/openapi.json desatualizado: rode `python -m scripts.export_openapi`"
+    )

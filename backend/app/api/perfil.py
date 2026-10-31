@@ -1,14 +1,18 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends
 
+from ..infra.db.models import Usuario
 from ..schemas.common import ErroResposta
 from ..schemas.perfil import PerfilResponse
-from ._deps import get_current_user_stub
+from ._deps import get_current_user
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/perfil", tags=["perfil"])
-ERR = {501: {"model": ErroResposta}}
+
+ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 
 @router.get("", response_model=PerfilResponse, responses=ERR)
-async def obter_perfil(_: dict = Depends(get_current_user_stub)) -> PerfilResponse:
+async def obter_perfil(current_user: Usuario = Depends(get_current_user)) -> PerfilResponse:
     raise NaoImplementadoError()

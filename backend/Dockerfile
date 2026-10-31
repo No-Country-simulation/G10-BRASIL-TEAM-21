@@ -6,15 +6,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /srv
 
+# Dependências primeiro
 COPY pyproject.toml ./
-# A mudança está aqui: instalar o pacote com as dependências de dev (ruff, pytest, httpx)
-RUN pip install ".[dev]"
+RUN pip install .
 
 COPY app ./app
+
+# ADICIONE ESTAS DUAS LINHAS AQUI:
 COPY alembic.ini ./
 COPY migrations ./migrations
-COPY tests ./tests
 
+# Usuário sem privilégios
 RUN useradd --system --uid 10001 --no-create-home app \
     && mkdir -p /srv/.local-storage \
     && chown -R app:app /srv

@@ -1,4 +1,4 @@
-"""Documentos: criação e listagem (v3 com domínio)."""
+"""Documentos: criação e listagem (com domínio)."""
 
 from datetime import datetime
 
@@ -20,8 +20,27 @@ class DocumentoCreateTexto(BaseModel):
     conteudo: str
 
 
+class ChunkIngeridoResponse(BaseModel):
+    """Chunk extraído durante o upload; não implica persistência do bloco."""
+
+    chunk_id: str
+    ordem: int
+    texto: str
+
+
+class UploadDocumentoResponse(BaseModel):
+    """Resultado da extração, chunking e registro dos metadados."""
+
+    documento_id: str
+    nome: str
+    tamanho_bytes: int
+    data_upload: datetime
+    total_chunks: int
+    chunks: list[ChunkIngeridoResponse]
+
+
 class DocumentoResponse(BaseModel):
-    """Saída de POST /documentos (v3)."""
+    """Saída de POST /documentos."""
 
     model_config = ConfigDict(extra="forbid")
     documento_id: str
@@ -35,7 +54,7 @@ class DocumentoResponse(BaseModel):
 
 
 class DocumentoResumo(BaseModel):
-    """Item de GET /documentos (v3)."""
+    """Item de GET /documentos."""
 
     model_config = ConfigDict(extra="forbid")
     documento_id: str

@@ -1,6 +1,6 @@
 """Itens por formato (contrato, seção 5.3)."""
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class Alternativa(BaseModel):
@@ -23,11 +23,21 @@ class ItemQuiz(BaseModel):
     model_config = ConfigDict(extra="forbid")
     pergunta: str
     alternativas: list[Alternativa]
-    resposta_correta: str  # id da alternativa correta
-    justificativa: str
+    resposta_correta: str | None = (
+        None  # id da alternativa correta # omitida quando incluir_gabarito=false
+    )
+    justificativa: str | None = None
     conceito_ref: str
     analogia_ref: str | None = None
     fontes_chunks: list[str]
+
+    @model_validator(mode="after")
+    def _correta_existe(self) -> "ItemQuiz":
+        # Garante que a resposta correta corresponda a uma alternativa existente
+        ids = {a.id for a in self.alternativas}
+        if self.resposta_correta is not None and self.resposta_correta not in ids:
+            raise ValueError("resposta_correta deve ser o id de uma das alternativas.")
+        return self
 
 
 class ItemTutorial(BaseModel):

@@ -1,23 +1,23 @@
-"""Gera docs/openapi.json a partir do app FastAPI.
-
-Uso: python -m backend.scripts.export_openapi  (a partir da raiz do backend/)
-"""
+"""Gera docs/openapi.json (contrato publicado para o front)."""
 
 import json
+import os
 from pathlib import Path
 
-from app.main import app
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+    os.environ["JWT_SECRET"] = "chave-super-secreta-de-teste-123456"
+    os.environ["JWT_EXPIRA_MIN"] = "60"
+
+from app.main import create_app  # noqa: E402
 
 
 def main() -> None:
-    spec = app.openapi()
-    raiz = Path(__file__).resolve().parents[2]
-    destino = raiz / "docs" / "openapi.json"
+    destino = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
     destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text(
-        json.dumps(spec, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+
+    spec = create_app().openapi()
+    destino.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"OpenAPI escrito em {destino}")
 
 

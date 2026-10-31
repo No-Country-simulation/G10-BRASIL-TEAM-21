@@ -1,8 +1,9 @@
-"""Modelos SQLAlchemy 2.x. Embedding fica de fora até T2.9 (N indefinido)."""
+"""Modelos SQLAlchemy 2.x do domínio e infraestrutura de persistência."""
 
 import uuid
 from datetime import datetime
 
+from pgvector.sqlalchemy import HALFVEC
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -76,8 +77,8 @@ class Documento(Base):
     objeto_oci: Mapped[str] = mapped_column(String(1000), nullable=False, default="")
     status_upload: Mapped[str] = mapped_column(String(20), nullable=False, default="pendente")
     hash_conteudo: Mapped[str] = mapped_column(String(64), nullable=False)
+    tamanho_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     nivel_documento_estimado: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    # v3
     dominio_conhecimento: Mapped[str | None] = mapped_column(String(30), nullable=True)
     classificador_usado: Mapped[str | None] = mapped_column(String(20), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -115,6 +116,7 @@ class Chunk(Base):
     chunk_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False)
     texto: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(HALFVEC(3072), nullable=True)
     # tsvector gerado (para busca híbrida, RN-22). Sem embedding até T2.9.
     tsvector_conteudo: Mapped[str | None] = mapped_column(
         TSVECTOR,
@@ -124,7 +126,15 @@ class Chunk(Base):
 
     documento: Mapped[Documento] = relationship(back_populates="chunks")
 
-    __table_args__ = (Index("ix_chunks_tsvector", "tsvector_conteudo", postgresql_using="gin"),)
+    __table_args__ = (
+        Index("ix_chunks_tsvector", "tsvector_conteudo", postgresql_using="gin"),
+        Index(
+            "ix_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "halfvec_cosine_ops"},
+        ),
+    )
 
 
 class Adaptacao(Base):
@@ -145,7 +155,6 @@ class Adaptacao(Base):
     nicho_setor: Mapped[str] = mapped_column(String(30), nullable=False)
     nivel_detalhe: Mapped[str] = mapped_column(String(30), nullable=False)
     nivel_do_usuario_no_momento: Mapped[str] = mapped_column(String(30), nullable=False)
-    # v3
     cache_key: Mapped[str] = mapped_column(String(64), nullable=False)
     resultado: Mapped[dict] = mapped_column(JSONB, nullable=False)
     ancoragem_fonte_score: Mapped[float] = mapped_column(Numeric(4, 3), nullable=False)

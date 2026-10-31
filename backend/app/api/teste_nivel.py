@@ -1,20 +1,24 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends
 
+from ..infra.db.models import Usuario
 from ..schemas.common import ErroResposta
 from ..schemas.perfil import (
     RespostasTesteRequest,
     RespostasTesteResponse,
     TesteNivelResponse,
 )
-from ._deps import get_current_user_stub
+from ._deps import get_current_user
 from ._errors import NaoImplementadoError
 
 router = APIRouter(prefix="/testes-nivel", tags=["testes-nivel"])
-ERR = {501: {"model": ErroResposta}}
+
+ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 
 @router.post("", response_model=TesteNivelResponse, status_code=201, responses=ERR)
-async def iniciar_teste(_: dict = Depends(get_current_user_stub)) -> TesteNivelResponse:
+async def iniciar_teste(current_user: Usuario = Depends(get_current_user)) -> TesteNivelResponse:
     raise NaoImplementadoError()
 
 
@@ -26,6 +30,6 @@ async def iniciar_teste(_: dict = Depends(get_current_user_stub)) -> TesteNivelR
 async def responder_teste(
     teste_id: str,
     payload: RespostasTesteRequest,
-    _: dict = Depends(get_current_user_stub),
+    current_user: Usuario = Depends(get_current_user),
 ) -> RespostasTesteResponse:
     raise NaoImplementadoError()

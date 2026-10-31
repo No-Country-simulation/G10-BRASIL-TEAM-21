@@ -23,8 +23,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      ADAPTAI_ENV: ${ADAPTAI_ENV:-dev}
-      ADAPTAI_MODO_DEMO: ${ADAPTAI_MODO_DEMO:-false}
+      adaptai_ENV: ${adaptai_ENV:-dev}
+      adaptai_MODO_DEMO: ${adaptai_MODO_DEMO:-false}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       JWT_EXPIRA_MIN: ${JWT_EXPIRA_MIN:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
@@ -32,30 +32,40 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       LOCAL_STORAGE_DIR: ${LOCAL_STORAGE_DIR:-.local-storage}
-      # (Mantenha as variáveis da OCI e LLM que já estavam aqui)
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-}
     volumes:
       - local_storage:/srv/.local-storage
-      - ./backend:/srv
-    expose:
-      - "8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000" # Mantemos exposto para debug direto se precisar
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   frontend:
     build: ./frontend
-    volumes:
-      - frontend_dist:/usr/share/nginx/html
-    # O frontend compila, copia os arquivos para o volume e "dorme"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: /api/v1 # Como passará pelo Nginx, a URL fica relativa
 
   nginx:
-    build: ./nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
-      - "80:80" # A ÚNICA porta exposta
+      - "80:80"
     depends_on:
       - backend
       - frontend
-    volumes:
-      - frontend_dist:/usr/share/nginx/html:ro # Acesso apenas leitura aos arquivos
 
 volumes:
   pgdata:
   local_storage:
-  frontend_dist:

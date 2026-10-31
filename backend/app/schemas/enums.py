@@ -57,7 +57,7 @@ class StatusUpload(str, Enum):
 
 
 class DominioConhecimento(str, Enum):
-    """v3 — classificado na ingestão (RN-21)."""
+    """Classificado na ingestão (RN-21)."""
 
     GERAL = "Geral"
     TI = "TI"
