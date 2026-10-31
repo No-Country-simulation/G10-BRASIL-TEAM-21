@@ -240,6 +240,53 @@
         ]
       }
     },
+    "/api/v1/documentos/buscar": {
+      "post": {
+        "tags": [
+          "documentos"
+        ],
+        "summary": "Buscar Documentos",
+        "description": "Busca os três chunks semanticamente mais próximos da pergunta.",
+        "operationId": "buscar_documentos_api_v1_documentos_buscar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuscaChunksRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuscaChunksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/documentos": {
       "post": {
         "tags": [
@@ -1394,6 +1441,79 @@
           "nivel_atual"
         ],
         "title": "CadastroResponse"
+      },
+      "BuscaChunksRequest": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Pergunta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pergunta"
+        ],
+        "title": "BuscaChunksRequest",
+        "description": "Pergunta usada para localizar trechos relevantes."
+      },
+      "BuscaChunksResponse": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "title": "Pergunta"
+          },
+          "resultados": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkBuscaResponse"
+            },
+            "type": "array",
+            "title": "Resultados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pergunta",
+          "resultados"
+        ],
+        "title": "BuscaChunksResponse",
+        "description": "Até três trechos mais relevantes para a pergunta."
+      },
+      "ChunkBuscaResponse": {
+        "properties": {
+          "documento_id": {
+            "type": "string",
+            "title": "Documento Id"
+          },
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "ordem": {
+            "type": "integer",
+            "title": "Ordem"
+          },
+          "texto": {
+            "type": "string",
+            "title": "Texto"
+          },
+          "similaridade": {
+            "type": "number",
+            "title": "Similaridade"
+          }
+        },
+        "type": "object",
+        "required": [
+          "documento_id",
+          "chunk_id",
+          "ordem",
+          "texto",
+          "similaridade"
+        ],
+        "title": "ChunkBuscaResponse",
+        "description": "Trecho recuperado e sua similaridade com a pergunta."
       },
       "ChunkIngeridoResponse": {
         "properties": {
