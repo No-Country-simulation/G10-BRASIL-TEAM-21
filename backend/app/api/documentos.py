@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..infra.db.models import Usuario
+from ..rag.embeddings import ErroEmbedding
 from ..rag.extractor import FormatoNaoSuportadoError
+from ..rag.retrieval import buscar_chunks_similares
+from ..schemas.busca import BuscaChunksRequest, BuscaChunksResponse, ChunkBuscaResponse
 from ..schemas.common import ErroResposta
 from ..schemas.documentos import (
     ChunkIngeridoResponse,
@@ -75,6 +78,9 @@ async def upload_documento(
         raise ErroApi(400, "FORMATO_NAO_SUPORTADO", str(exc)) from exc
     except (PDFSyntaxError, UnicodeDecodeError, ValueError) as exc:
         raise ErroApi(400, "ARQUIVO_INVALIDO", "Não foi possível ler o arquivo enviado.") from exc
+    except ErroEmbedding as exc:
+        logger.exception("Falha ao gerar embeddings durante o upload")
+        raise ErroApi(503, "EMBEDDING_INDISPONIVEL", str(exc)) from exc
     except Exception as exc:
         logger.error("Erro ao processar documento: %s", str(exc))
         raise ErroApi(500, "ERRO_INTERNO", "Erro ao processar o documento.") from exc
@@ -90,6 +96,39 @@ async def upload_documento(
         total_chunks=len(chunks),
         chunks=[
             ChunkIngeridoResponse(chunk_id=c.chunk_id, ordem=c.ordem, texto=c.texto) for c in chunks
+        ],
+    )
+
+
+@router.post("/buscar", response_model=BuscaChunksResponse)
+def buscar_documentos(
+    payload: BuscaChunksRequest,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BuscaChunksResponse:
+    """Busca os três chunks semanticamente mais próximos da pergunta."""
+    try:
+        resultados = buscar_chunks_similares(
+            db=db,
+            pergunta=payload.pergunta,
+            usuario_id=current_user.usuario_id,
+            limite=3,
+        )
+    except ErroEmbedding as exc:
+        logger.exception("Falha ao gerar embedding da consulta")
+        raise ErroApi(503, "EMBEDDING_INDISPONIVEL", str(exc)) from exc
+
+    return BuscaChunksResponse(
+        pergunta=payload.pergunta,
+        resultados=[
+            ChunkBuscaResponse(
+                documento_id=str(resultado.chunk.documento_id),
+                chunk_id=resultado.chunk.chunk_id,
+                ordem=resultado.chunk.ordem,
+                texto=resultado.chunk.texto,
+                similaridade=resultado.similaridade,
+            )
+            for resultado in resultados
         ],
     )
 
