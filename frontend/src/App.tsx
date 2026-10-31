@@ -1,122 +1,72 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
 
+const pages = [['acesso', 'Acesso'], ['criar', 'Novo conteúdo'], ['resultado', 'Resultado'], ['historico', 'Histórico'], ['perfil', 'Perfil e nível']] as const
+const formatos = ['Flashcards', 'Quiz', 'Tutorial', 'Resumo Executivo', 'Roteiro de Aula'] as const
+type Page = (typeof pages)[number][0]
+type Estado = 'sucesso' | 'carregando' | 'vazio' | 'erro'
+type Formato = (typeof formatos)[number]
+const uploadLabels = { concluido: 'Sincronizado', pendente: 'Envio pendente', falha: 'Falha no envio' }
+
+function UploadWarning({ status }: { status: keyof typeof uploadLabels }) {
+  if (status === 'concluido') return <span className="status status--ok">✓ {uploadLabels[status]}</span>
+  return <div className="warning" role="status"><span aria-hidden="true">!</span><div><strong>{uploadLabels[status]}</strong><p>O resultado foi salvo e pode ser reaberto. A sincronização com o armazenamento será tentada novamente.</p></div></div>
+}
+
+function StatePanel({ page, state, onRetry }: { page: string; state: Exclude<Estado, 'sucesso'>; onRetry: () => void }) {
+  if (state === 'carregando') return <section className="state-panel" aria-live="polite"><span className="spinner" /><h2>Carregando {page.toLowerCase()}…</h2><p>Estamos preparando as informações para você.</p></section>
+  if (state === 'vazio') return <section className="state-panel"><div className="state-icon">○</div><h2>Ainda não há nada aqui</h2><p>Quando houver {page.toLowerCase()}, ele aparecerá nesta tela.</p><button className="button" onClick={onRetry}>Ver exemplo</button></section>
+  return <section className="state-panel state-panel--error" role="alert"><div className="state-icon">!</div><h2>Não foi possível carregar</h2><p>Verifique sua conexão e tente novamente. Se o problema continuar, use o código <code>BANCO_INDISPONIVEL</code> ao falar com o suporte.</p><button className="button" onClick={onRetry}>Tentar novamente</button></section>
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState<Page>('acesso')
+  const [state, setState] = useState<Estado>('sucesso')
+  const [authMode, setAuthMode] = useState<'login' | 'cadastro'>('login')
+  const [formato, setFormato] = useState<Formato>('Flashcards')
+  const [uploadStatus, setUploadStatus] = useState<keyof typeof uploadLabels>('pendente')
+  const [quizAnswer, setQuizAnswer] = useState('')
+  const [notice, setNotice] = useState('')
+  const open = (next: Page) => { setPage(next); setState('sucesso'); setNotice('') }
+  const submit = (message: string, destination?: Page) => { setNotice(''); setState('carregando'); window.setTimeout(() => { setState('sucesso'); setNotice(message); if (destination) setPage(destination) }, 700) }
+  const content = () => {
+    if (state !== 'sucesso') return <StatePanel page={pages.find(([id]) => id === page)?.[1] ?? 'a tela'} state={state} onRetry={() => setState('sucesso')} />
+    if (page === 'acesso') return <Access mode={authMode} onMode={setAuthMode} onSubmit={() => submit(authMode === 'login' ? 'Sessão iniciada. Bem-vinda, Ana!' : 'Conta criada. Agora você já pode adaptar um conteúdo.', authMode === 'login' ? 'criar' : 'perfil')} />
+    if (page === 'criar') return <Create onSubmit={() => submit('Documento indexado e adaptação gerada com sucesso.', 'resultado')} />
+    if (page === 'resultado') return <Result formato={formato} onFormato={setFormato} uploadStatus={uploadStatus} onUploadStatus={setUploadStatus} quizAnswer={quizAnswer} onQuizAnswer={setQuizAnswer} />
+    if (page === 'historico') return <History onOpen={() => open('resultado')} />
+    return <Profile onStartTest={() => setNotice('Teste de nível ainda indisponível: acumule 40 XP para liberá-lo.')} />
+  }
+  return <div className="app-shell"><header className="topbar"><button className="brand" onClick={() => open('criar')} aria-label="AdaptAI, início"><span>✦</span> AdaptAI</button><nav aria-label="Navegação principal">{pages.map(([id, label]) => <button key={id} className={page === id ? 'nav-link active' : 'nav-link'} onClick={() => open(id)}>{label}</button>)}</nav><button className="avatar" onClick={() => open('perfil')} aria-label="Abrir perfil">AS</button></header><div className="demo-bar"><span>Protótipo conectado ao contrato v1.0</span><label>Estado da tela <select value={state} onChange={(event) => setState(event.target.value as Estado)}><option value="sucesso">Sucesso</option><option value="carregando">Carregando</option><option value="vazio">Vazio</option><option value="erro">Erro</option></select></label></div><main className="main-content">{notice && <div className="toast" role="status">✓ {notice}</div>}{content()}</main></div>
+}
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+function Access({ mode, onMode, onSubmit }: { mode: 'login' | 'cadastro'; onMode: (mode: 'login' | 'cadastro') => void; onSubmit: () => void }) {
+  const cadastro = mode === 'cadastro'
+  return <section className="access-layout"><div className="intro-panel"><span className="eyebrow">APRENDA NO SEU RITMO</span><h1>Transforme documentos em conhecimento aplicável.</h1><p>Adapte conteúdos técnicos ao seu nível, em formatos feitos para aprender melhor.</p><div className="feature-list"><span>✓ Conteúdo ancorado na fonte</span><span>✓ Cinco formatos de estudo</span><span>✓ Evolução acompanhada por XP</span></div></div><div className="auth-card"><div className="tablist" role="tablist"><button className={!cadastro ? 'selected' : ''} onClick={() => onMode('login')}>Entrar</button><button className={cadastro ? 'selected' : ''} onClick={() => onMode('cadastro')}>Criar conta</button></div><h2>{cadastro ? 'Sua jornada começa aqui' : 'Que bom ter você de volta'}</h2><p className="muted">{cadastro ? 'Informe seus dados para personalizarmos sua experiência.' : 'Entre para continuar seus estudos.'}</p><form onSubmit={(event) => { event.preventDefault(); onSubmit() }}>{cadastro && <label>Nome completo<input required placeholder="Ana Souza" /></label>}<label>E-mail<input required type="email" placeholder="ana@exemplo.com" /></label><label>Senha<input required type="password" minLength={8} placeholder="Mínimo de 8 caracteres" /></label>{cadastro && <label>Nível atual<select defaultValue="Iniciante"><option>Iniciante</option><option>Desenvolvedor Junior</option><option>Desenvolvedor Pleno</option><option>Tech Lead</option><option>Arquiteto</option><option>Gestor/Executivo</option></select></label>}<button className="button button--wide" type="submit">{cadastro ? 'Criar minha conta' : 'Entrar na plataforma'} <span>→</span></button></form>{!cadastro && <button className="link-button" onClick={() => onMode('cadastro')}>Ainda não tenho uma conta</button>}</div></section>
+}
 
-      <div className="ticks"></div>
+function Create({ onSubmit }: { onSubmit: () => void }) {
+  return <section className="page"><div className="page-heading"><span className="eyebrow">NOVA ADAPTAÇÃO</span><h1>O que vamos estudar hoje?</h1><p>Envie um documento ou cole um texto. Nós organizamos o conteúdo para o seu objetivo.</p></div><div className="create-grid"><form className="card form-card" onSubmit={(event) => { event.preventDefault(); onSubmit() }}><h2>1. Fonte do conteúdo</h2><div className="dropzone"><strong>↑ Envie seu arquivo</strong><span>PDF, Markdown ou TXT · até 10 MB</span><button type="button" className="outline-button">Escolher arquivo</button></div><div className="divider"><span>ou</span></div><label>Título do conteúdo<input required defaultValue="Introdução a Arquitetura de Redes VCN na OCI" /></label><label>Cole o texto aqui<textarea required defaultValue="Uma VCN é uma rede virtual privada e personalizável dentro da Oracle Cloud Infrastructure." /></label><h2>2. Como você quer aprender?</h2><div className="field-grid"><label>Seu perfil<select defaultValue="Iniciante"><option>Iniciante</option><option>Desenvolvedor Junior</option><option>Desenvolvedor Pleno</option><option>Tech Lead</option><option>Arquiteto</option><option>Gestor/Executivo</option></select></label><label>Formato<select defaultValue="Flashcards">{formatos.map((item) => <option key={item}>{item}</option>)}</select></label><label>Nicho<select defaultValue="Geral"><option>Geral</option><option>Fintech</option><option>Saude</option><option>E-commerce</option></select></label><label>Nível de detalhe<select defaultValue="Didatico"><option>Didatico</option><option>Intermediario</option><option>Aprofundado</option></select></label></div><button className="button button--wide" type="submit">Gerar adaptação <span>→</span></button></form><aside className="side-note"><span className="note-icon">✦</span><h2>Uma adaptação por vez</h2><p>O resultado é criado a partir da sua fonte. Conceitos e trechos usados ficam rastreáveis em cada item.</p><hr /><strong>O que você recebe</strong><ul><li>Resumo contextualizado</li><li>Formato ajustado ao seu perfil</li><li>Fontes de cada conceito</li><li>Qualidade e progresso de estudo</li></ul></aside></div></section>
+}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+function Result({ formato, onFormato, uploadStatus, onUploadStatus, quizAnswer, onQuizAnswer }: { formato: Formato; onFormato: (value: Formato) => void; uploadStatus: keyof typeof uploadLabels; onUploadStatus: (value: keyof typeof uploadLabels) => void; quizAnswer: string; onQuizAnswer: (value: string) => void }) {
+  return <section className="page"><div className="result-head"><div><span className="eyebrow">RESULTADO PRONTO</span><h1>Dominando Redes na Nuvem (VCN) do Zero</h1><p>Adaptado para <strong>Iniciante</strong> · Geral · Didático · 5 min de estudo</p></div><div className="score"><span>Ancoragem na fonte</span><strong>98<span>%</span></strong><small>4 chunks utilizados</small></div></div><div className="warning"><span aria-hidden="true">!</span><div><strong>Este conteúdo pode estar acima do seu nível atual</strong><p>O documento foi estimado como Desenvolvedor Pleno. A adaptação continua disponível para você estudar no seu ritmo.</p></div></div><div className="result-toolbar"><div className="format-tabs" aria-label="Formato do resultado">{formatos.map((item) => <button key={item} className={formato === item ? 'selected' : ''} onClick={() => onFormato(item)}>{item}</button>)}</div><label className="compact-select">Simular armazenamento<select value={uploadStatus} onChange={(event) => onUploadStatus(event.target.value as keyof typeof uploadLabels)}><option value="concluido">Concluído</option><option value="pendente">Pendente</option><option value="falha">Falha</option></select></label></div><UploadWarning status={uploadStatus} /><article className="content-card"><p className="introduction">Imagine uma VCN como o seu próprio bairro particular e seguro dentro da nuvem, onde você decide quem entra e quem sai.</p><ResultFormat formato={formato} quizAnswer={quizAnswer} onQuizAnswer={onQuizAnswer} /></article><section className="quality-card"><div><span>✓</span><div><strong>Conteúdo baseado na sua fonte</strong><p>As referências de origem estão disponíveis em cada item. Analogias, quando existirem, são identificadas separadamente.</p></div></div><button className="outline-button">Ver detalhes da qualidade</button></section></section>
+}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function ResultFormat({ formato, quizAnswer, onQuizAnswer }: { formato: Formato; quizAnswer: string; onQuizAnswer: (value: string) => void }) {
+  if (formato === 'Flashcards') return <div className="items-list"><div className="flashcard"><span>1 · VCN</span><h2>O que é uma VCN na Oracle Cloud?</h2><p>É uma rede virtual privada e personalizável dentro da OCI, onde você controla a comunicação dos recursos.</p><small>Fonte: chunk-001, chunk-002</small></div><div className="flashcard"><span>2 · SUB-REDES</span><h2>Para que servem as sub-redes?</h2><p>Elas segmentam a VCN para organizar recursos e aplicar regras de acesso específicas.</p><small>Fonte: chunk-002</small></div></div>
+  if (formato === 'Quiz') return <div className="quiz"><span className="item-label">1 de 3 · VCN</span><h2>Qual é a principal função de uma VCN?</h2><div className="answers">{[['a', 'Armazenar arquivos na nuvem'], ['b', 'Criar uma rede virtual privada para seus recursos'], ['c', 'Criar contas de usuário']].map(([id, label]) => <label key={id} className={quizAnswer === id ? 'answer selected' : 'answer'}><input type="radio" name="quiz" value={id} checked={quizAnswer === id} onChange={() => onQuizAnswer(id)} /> <b>{id.toUpperCase()}</b>{label}</label>)}</div>{quizAnswer && <p className="feedback">✓ Resposta registrada. O feedback e XP são recebidos após o envio das respostas.</p>}<small>Fonte: chunk-001</small></div>
+  if (formato === 'Tutorial') return <div className="tutorial"><span className="item-label">PASSO 1</span><h2>Entenda a VCN como a sua rede base</h2><p>Antes de criar recursos, defina a rede virtual em que eles irão se comunicar. Ela é isolada de outras redes na nuvem.</p><aside>Exemplo: crie uma VCN para separar os servidores de uma aplicação dos demais recursos.</aside><small>Fonte: chunk-001</small></div>
+  if (formato === 'Resumo Executivo') return <div className="summary"><span className="item-label">VISÃO GERAL</span><h2>VCN organiza a rede dos seus recursos na OCI</h2><p>A VCN permite criar uma rede privada lógica, configurar sub-redes e controlar o tráfego entre recursos e com a internet.</p><div><strong>Impacto no negócio</strong><p>Uma rede organizada facilita o controle de acesso e o isolamento dos componentes de uma aplicação.</p></div><small>Fonte: chunk-001, chunk-002</small></div>
+  return <div className="script"><span className="item-label">BLOCO 1 · 2 MIN</span><h2>Apresente a ideia de rede privada na nuvem</h2><p><strong>Fala:</strong> “Pense na VCN como o terreno onde sua aplicação vive. Você escolhe quais portas, caminhos e vizinhos ela terá.”</p><p><strong>Recurso visual:</strong> Diagrama simples de VCN, sub-redes e gateway.</p><small>Fonte: chunk-001</small></div>
+}
+
+function History({ onOpen }: { onOpen: () => void }) {
+  return <section className="page"><div className="page-heading inline-heading"><div><span className="eyebrow">HISTÓRICO</span><h1>Seus conteúdos adaptados</h1><p>Retome exatamente o resultado que foi gerado para você.</p></div><button className="button" onClick={onOpen}>+ Nova adaptação</button></div><div className="history-list"><article className="history-item"><div className="history-icon">▤</div><div><h2>Dominando Redes na Nuvem (VCN) do Zero</h2><p>Flashcards · Iniciante · Geral</p><small>17 out. 2026, 14:02 · Ancoragem na fonte: 98%</small></div><div className="history-action"><span className="status status--ok">✓ Sincronizado</span><button className="outline-button" onClick={onOpen}>Reabrir →</button></div></article><article className="history-item"><div className="history-icon">?</div><div><h2>Fundamentos de autenticação</h2><p>Quiz · Iniciante · Geral</p><small>15 out. 2026, 10:18 · Ancoragem na fonte: 91%</small></div><div className="history-action"><span className="status status--warning">! Envio pendente</span><button className="outline-button" onClick={onOpen}>Reabrir →</button></div></article></div></section>
+}
+
+function Profile({ onStartTest }: { onStartTest: () => void }) {
+  return <section className="page"><div className="page-heading"><span className="eyebrow">SUA EVOLUÇÃO</span><h1>Olá, Ana. Você está construindo base.</h1><p>Acompanhe o seu avanço e descubra quando estará pronta para o próximo nível.</p></div><div className="profile-grid"><section className="level-card"><div className="level-top"><div><span>NÍVEL ATUAL</span><h2>Iniciante</h2></div><div className="xp-badge">60 XP</div></div><div className="progress-label"><span>Progresso para Desenvolvedor Junior</span><strong>60 / 100 XP</strong></div><div className="progress"><i style={{ width: '60%' }} /></div><p>Faltam 40 XP para liberar o Teste de Nível.</p><button className="button button--disabled" onClick={onStartTest}>Teste de nível indisponível <span>🔒</span></button></section><section className="concept-card"><h2>Seus conceitos</h2><div><strong>Dominados</strong><p><span className="tag tag--good">✓ VCN</span></p></div><div><strong>Em aprendizado</strong><p><span className="tag">Sub-redes</span><span className="tag">Internet Gateway</span><span className="tag">Security Lists</span></p></div></section></div><section className="timeline-card"><h2>Atividade recente</h2><div className="timeline-item"><span>+10 XP</span><div><strong>Você gerou uma adaptação</strong><p>Flashcards de “Introdução a Arquitetura de Redes VCN na OCI”</p></div><time>Hoje</time></div><div className="timeline-item"><span>+5 XP</span><div><strong>Você acertou uma questão</strong><p>Quiz de Fundamentos de autenticação</p></div><time>15 out.</time></div></section></section>
 }
 
 export default App
