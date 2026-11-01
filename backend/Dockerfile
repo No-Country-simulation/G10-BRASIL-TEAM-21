@@ -6,14 +6,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /srv
 
-# Dependências primeiro: a camada fica em cache enquanto o pyproject.toml não mudar.
+# Dependências primeiro
 COPY pyproject.toml ./
 RUN pip install .
 
 COPY app ./app
-# Quando existirem (US-008): COPY alembic.ini ./ e COPY migrations ./migrations
 
-# Usuário sem privilégios; a pasta de armazenamento local precisa ser gravável por ele.
+# ADICIONE ESTAS DUAS LINHAS AQUI:
+COPY alembic.ini ./
+COPY migrations ./migrations
+
+# Usuário sem privilégios
 RUN useradd --system --uid 10001 --no-create-home app \
     && mkdir -p /srv/.local-storage \
     && chown -R app:app /srv

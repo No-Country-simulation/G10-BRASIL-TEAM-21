@@ -39,6 +39,28 @@
 - Token armazenado de forma consciente do risco (ver [04 - Arquitetura](./04%20-%20Arquitetura.md)); nunca registrado em console ou logs.
 - Framework: React com Vite ([ADR-0012](./adr/ADR-0012-framework-do-front-end.md)). Convenções específicas (estrutura de pastas, estado, rotas) entram aqui quando o projeto for criado.
 
+### 3.1 Organização e consumo da API (T5 / US-003)
+
+- React + Vite com TypeScript em modo estrito. Preservar os diretórios `src/componentes/`, `src/paginas/` e `src/hooks/` introduzidos na T4; não criar diretórios paralelos `components/` ou `pages/`.
+- `src/api/schema.d.ts` é gerado de `backend/docs/openapi.json` por `npm run gerar:tipos`. Aliases podem referenciar esses modelos; não copiar interfaces de domínio manualmente.
+- `src/api/` concentra configuração, HTTP, erros e funções de adaptação. Páginas não usam `fetch` diretamente. `VITE_USE_MOCK=true` seleciona fixtures; qualquer outro valor seleciona HTTP em `VITE_API_URL` (base com `/api/v1`). Não trocar erro HTTP por sucesso mock automaticamente.
+- `frontend/mocks/` contém as fixtures canônicas. `npm run mocks:sync` copia os JSONs para `src/mocks/` antes de desenvolvimento, testes e build. Editar a origem; manter a cópia sincronizada.
+- `src/texts/pt-BR.ts` centraliza textos de interface e mensagens dos códigos da seção 8 do contrato. Conteúdo educacional recebido da API fica nos dados, sem tradução ou reescrita pelo front.
+- React Router preserva `/login`, `/cadastro`, `/upload`, `/resultado/:id`, `/historico` e `/perfil`. `recente` é uma rota local para o resultado recém-gerado, mantido apenas em memória; não é um identificador retornado pela API.
+- Estados da prova de conceito derivam da requisição assíncrona, com cancelamento e nova tentativa. Parâmetros de demonstração e controles de cenários só são aplicados com mock ativo.
+- O cliente aceita um provedor de Bearer token em memória (`src/api/sessao.ts`); não persiste tokens e não faz logs de credenciais. Integração das páginas de autenticação pertence ao fluxo de acesso.
+- Executar `npm run typecheck`, `npm run lint`, `npm test` e `npm run build`. Fixtures são verificadas contra o JSON Schema do OpenAPI e contra o exemplo completo de Flashcards em docs/05.
+- O ADR-0012 e docs/09 são referenciados pelo planejamento, mas não estão presentes nesta revisão do repositório. Este registro documenta a implementação existente; não presume o conteúdo ou a aprovação dos documentos ausentes.
+
+### 3.2 Tipos gerados do OpenAPI (T6)
+
+- `npm run gen:api` gera `frontend/src/api/schema.d.ts` a partir de `backend/docs/openapi.json`. `npm run gerar:tipos` é um alias de compatibilidade. Usar o gerador local instalado por `npm ci` e o lockfile versionado.
+- Os tipos gerados são commitados e não são editados ou formatados manualmente. `src/api/tipos.ts` pode expor aliases de `components['schemas']`; interfaces próprias de configuração, props e estado não são modelos de resposta da API.
+- Toda alteração de contrato deve incluir no mesmo PR: schemas/rotas, documentação afetada, exportação do OpenAPI, regeneração de tipos e ajustes de consumidores/mocks. O documento servido pelo FastAPI fica em `/openapi.json`, fora do prefixo `/api/v1`.
+- `npm run check:api` gera uma cópia temporária e compara com os tipos versionados, sem modificar o projeto. Falha se o arquivo estiver ausente ou diferente do gerado. Corrigir com `npm run gen:api` e incluir os arquivos no PR.
+- O job do front no CI executa `check:api` também quando mudam o OpenAPI, schemas, rotas, criação do app, script de exportação ou docs/05. O check existente do backend cobre schemas → OpenAPI; o novo check cobre OpenAPI → TypeScript. Nenhum deles cria commits automaticamente.
+- Antes de enviar o PR: `npm run check:api`, `npm run typecheck`, `npm run lint`, `npm test` e `npm run build`. Procedimento completo e prova de desatualização em `frontend/README.md` e `frontend/tests/geracao-api.test.ts`.
+
 ## 4. API
 
 - Rotas em português, minúsculas, no plural, com hífen: `/testes-nivel`, `/adaptacoes`.

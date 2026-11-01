@@ -1,6 +1,6 @@
 # Servidor de desenvolvimento do Vite (uso local e demonstração via Compose).
 # Requer package.json e package-lock.json em frontend/ (gere com "npm create vite@latest" e "npm install").
-FROM node:22-alpine
+FROM node:26-alpine 
 
 WORKDIR /app
 
