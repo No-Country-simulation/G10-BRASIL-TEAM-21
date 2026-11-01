@@ -1,15 +1,20 @@
 ﻿import { NavLink, Outlet } from 'react-router-dom'
 
+import { textos } from '../texts/pt-BR'
+
 export default function Layout() {
   return (
     <>
       <header className="cabecalho">
-        <a className="marca" href="/upload">AdaptAI</a>
+        <NavLink className="marca" to="/upload">
+          {textos.marca}
+        </NavLink>
 
-        <nav className="navegacao" aria-label="Navegação principal">
-          <NavLink to="/upload">Novo conteúdo</NavLink>
-          <NavLink to="/historico">Histórico</NavLink>
-          <NavLink to="/perfil">Meu perfil</NavLink>
+        <nav className="navegacao" aria-label={textos.navegacao.aria}>
+          <NavLink to="/upload">{textos.navegacao.upload}</NavLink>
+          <NavLink to="/historico">{textos.navegacao.historico}</NavLink>
+          <NavLink to="/perfil">{textos.navegacao.perfil}</NavLink>
+          <NavLink to="/login">{textos.navegacao.login}</NavLink>
         </nav>
       </header>
 
@@ -17,9 +22,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <footer className="rodape">
-        AdaptAI · Aprendizagem adaptativa
-      </footer>
+      <footer className="rodape">{textos.rodape}</footer>
     </>
   )
 }

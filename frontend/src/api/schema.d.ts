@@ -92,6 +92,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documentos/buscar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Buscar Documentos
+         * @description Busca os três chunks semanticamente mais próximos da pergunta.
+         */
+        post: operations["buscar_documentos_api_v1_documentos_buscar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documentos": {
         parameters: {
             query?: never;
@@ -433,6 +453,40 @@ export interface components {
             /** Email */
             email: string;
             nivel_atual: components["schemas"]["Nivel"];
+        };
+        /**
+         * BuscaChunksRequest
+         * @description Pergunta usada para localizar trechos relevantes.
+         */
+        BuscaChunksRequest: {
+            /** Pergunta */
+            pergunta: string;
+        };
+        /**
+         * BuscaChunksResponse
+         * @description Até três trechos mais relevantes para a pergunta.
+         */
+        BuscaChunksResponse: {
+            /** Pergunta */
+            pergunta: string;
+            /** Resultados */
+            resultados: components["schemas"]["ChunkBuscaResponse"][];
+        };
+        /**
+         * ChunkBuscaResponse
+         * @description Trecho recuperado e sua similaridade com a pergunta.
+         */
+        ChunkBuscaResponse: {
+            /** Documento Id */
+            documento_id: string;
+            /** Chunk Id */
+            chunk_id: string;
+            /** Ordem */
+            ordem: number;
+            /** Texto */
+            texto: string;
+            /** Similaridade */
+            similaridade: number;
         };
         /**
          * ChunkIngeridoResponse
@@ -1107,6 +1161,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadDocumentoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    buscar_documentos_api_v1_documentos_buscar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuscaChunksRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuscaChunksResponse"];
                 };
             };
             /** @description Validation Error */
