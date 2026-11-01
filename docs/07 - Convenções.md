@@ -52,6 +52,15 @@
 - Executar `npm run typecheck`, `npm run lint`, `npm test` e `npm run build`. Fixtures são verificadas contra o JSON Schema do OpenAPI e contra o exemplo completo de Flashcards em docs/05.
 - O ADR-0012 e docs/09 são referenciados pelo planejamento, mas não estão presentes nesta revisão do repositório. Este registro documenta a implementação existente; não presume o conteúdo ou a aprovação dos documentos ausentes.
 
+### 3.2 Tipos gerados do OpenAPI (T6)
+
+- `npm run gen:api` gera `frontend/src/api/schema.d.ts` a partir de `backend/docs/openapi.json`. `npm run gerar:tipos` é um alias de compatibilidade. Usar o gerador local instalado por `npm ci` e o lockfile versionado.
+- Os tipos gerados são commitados e não são editados ou formatados manualmente. `src/api/tipos.ts` pode expor aliases de `components['schemas']`; interfaces próprias de configuração, props e estado não são modelos de resposta da API.
+- Toda alteração de contrato deve incluir no mesmo PR: schemas/rotas, documentação afetada, exportação do OpenAPI, regeneração de tipos e ajustes de consumidores/mocks. O documento servido pelo FastAPI fica em `/openapi.json`, fora do prefixo `/api/v1`.
+- `npm run check:api` gera uma cópia temporária e compara com os tipos versionados, sem modificar o projeto. Falha se o arquivo estiver ausente ou diferente do gerado. Corrigir com `npm run gen:api` e incluir os arquivos no PR.
+- O job do front no CI executa `check:api` também quando mudam o OpenAPI, schemas, rotas, criação do app, script de exportação ou docs/05. O check existente do backend cobre schemas → OpenAPI; o novo check cobre OpenAPI → TypeScript. Nenhum deles cria commits automaticamente.
+- Antes de enviar o PR: `npm run check:api`, `npm run typecheck`, `npm run lint`, `npm test` e `npm run build`. Procedimento completo e prova de desatualização em `frontend/README.md` e `frontend/tests/geracao-api.test.ts`.
+
 ## 4. API
 
 - Rotas em português, minúsculas, no plural, com hífen: `/testes-nivel`, `/adaptacoes`.

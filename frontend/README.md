@@ -1,6 +1,7 @@
 # Frontend · React + Vite + TypeScript
 
 T5 / US-003: cliente de API com alternância entre fixtures do contrato e backend real.
+T6: tipos gerados do OpenAPI com verificação de sincronização no CI.
 Preserva o roteamento e os diretórios da T4. Regras em
 [docs/07 §3](../docs/07%20-%20Conven%C3%A7%C3%B5es.md#3-front-end); dados e erros em
 [docs/05](../docs/05%20-%20Contrato%20de%20API.md).
@@ -63,7 +64,7 @@ frontend/
   scripts/sincronizar-mocks.mjs       # copia fixtures para src/
   src/
     api/                            # configuração, HTTP, sessão, erros e adaptações
-      schema.d.ts                   # gerado do OpenAPI, não editar manualmente
+      schema.d.ts                   # gerado e versionado, não editar manualmente
     componentes/                    # Layout, EstadoTela, PacoteAdaptacao
     paginas/                        # páginas da T4
     hooks/                          # estados de demonstração das prévias
@@ -108,7 +109,8 @@ fixture/prova de conceito da T5 é exclusivamente Flashcards.
 ## Contrato e validação
 
 ```bash
-npm run gerar:tipos
+npm run gen:api
+npm run check:api
 npm run mocks:sync
 npm run typecheck
 npm run lint
@@ -116,8 +118,9 @@ npm test
 npm run build
 ```
 
-`gerar:tipos` lê `backend/docs/openapi.json`. Tipos de domínio são aliases dos modelos
-gerados; interfaces locais descrevem apenas configuração e estado da interface.
+`gen:api` lê `backend/docs/openapi.json`; `gerar:tipos` continua disponível como alias.
+Tipos de domínio são aliases dos modelos gerados; interfaces locais descrevem apenas
+configuração e estado da interface.
 `strict` está habilitado no TypeScript para conferir os casos `null`.
 
 Edite apenas `mocks/adaptacao-flashcards.json`. A sincronização acontece antes de
@@ -129,6 +132,66 @@ Dependências de desenvolvimento da T5: Vitest executa os testes; Testing Librar
 jsdom verificam estados e navegação; AJV e ajv-formats validam fixtures contra o
 OpenAPI. Os testes não fazem rede e não exigem banco, LLM ou OCI. O CI existente
 executa `typecheck`, `test`, lint e build pelos scripts do projeto.
+
+## Tipos OpenAPI · T6
+
+O `openapi-typescript` é uma dependência de desenvolvimento versionada no lockfile.
+`npm ci` instala o gerador local; não é necessária uma instalação global. A fonte da
+verdade são os schemas Pydantic, publicados em `backend/docs/openapi.json`. A geração
+padrão usa esse arquivo, sem precisar iniciar a API ou acessar banco, LLM e OCI.
+O FastAPI também serve o documento em `http://localhost:8000/openapi.json` (fora de
+`/api/v1`); esse endpoint pode ser usado para consultar o contrato em execução.
+
+```text
+backend/app/schemas/ + rotas FastAPI
+              ↓ exportação do backend
+backend/docs/openapi.json
+              ↓ npm run gen:api
+frontend/src/api/schema.d.ts
+              ↓ aliases em api/tipos.ts
+cliente HTTP, mocks e componentes
+```
+
+`schema.d.ts` deve ser commitado. Não formate nem edite esse arquivo à mão.
+`tipos.ts` apenas referencia `components['schemas']` do arquivo gerado para modelos
+como `Adaptacao`, `AdaptacaoRequest`, `Documento`, `ErroResposta` e `ItemConteudo`.
+Interfaces de configuração, estado, cenários de mock e props são tipos locais de
+interface, não duplicações das respostas do backend. A importação do JSON do mock
+usa uma asserção de tipo porque seus valores string não são inferidos como enums;
+as fixtures e variantes são validadas contra o JSON Schema publicado nos testes.
+
+Ao mudar schemas ou rotas, inclua no **mesmo PR**:
+
+1. A alteração no backend e a atualização da documentação afetada.
+2. O OpenAPI atualizado, exportado na pasta `backend/` com
+   `python -m scripts.export_openapi`, no ambiente de desenvolvimento do backend.
+3. Os tipos regenerados na pasta `frontend/` com `npm run gen:api`.
+4. Os ajustes de consumidores e mocks exigidos pelo novo contrato.
+5. A validação com `npm run check:api`, `npm run typecheck`, `npm run lint`,
+   `npm test` e `npm run build`.
+
+`check:api` gera uma cópia em diretório temporário, compara com o arquivo versionado
+e remove os temporários. Não modifica o contrato ou os tipos do projeto. Se o arquivo
+estiver ausente, editado à mão ou desatualizado, termina com código 1 e orienta a
+regeneração. Os parâmetros locais `--source` e `--output` do script permitem verificar
+cópias isoladas:
+
+```bash
+npm run check:api -- --source /caminho/openapi.json --output /caminho/schema.d.ts
+```
+
+Sem parâmetros, os caminhos são relativos ao próprio script,
+independentemente da pasta de onde ele foi chamado.
+
+O CI executa `check:api` explicitamente antes do lint/typecheck/testes/build do front.
+A detecção de mudanças também inclui o OpenAPI, schemas, routers, criação do app,
+script de exportação e docs/05 do backend. O teste existente do backend confere a
+sincronização entre FastAPI e o OpenAPI versionado; o novo check confere OpenAPI e
+TypeScript. O CI verifica os arquivos e não cria commits automaticamente.
+
+Os testes da T6 alteram apenas cópias temporárias: comprovam falha após mudança de
+contrato ou edição manual dos tipos, falha com tipos ausentes/documento inválido e
+sucesso após regeneração. O arquivo real do projeto é preservado.
 
 ## Referências pendentes
 

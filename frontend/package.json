@@ -9,7 +9,9 @@
     "build": "npm run mocks:sync && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "gerar:tipos": "openapi-typescript ../backend/docs/openapi.json -o src/api/schema.d.ts",
+    "gen:api": "openapi-typescript ../backend/docs/openapi.json -o src/api/schema.d.ts",
+    "gerar:tipos": "npm run gen:api",
+    "check:api": "node scripts/verificar-api.mjs",
     "mocks:sync": "node scripts/sincronizar-mocks.mjs",
     "typecheck": "tsc -b",
     "test": "npm run mocks:sync && vitest run"
