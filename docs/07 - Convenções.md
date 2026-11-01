@@ -39,6 +39,19 @@
 - Token armazenado de forma consciente do risco (ver [04 - Arquitetura](./04%20-%20Arquitetura.md)); nunca registrado em console ou logs.
 - Framework: React com Vite ([ADR-0012](./adr/ADR-0012-framework-do-front-end.md)). Convenções específicas (estrutura de pastas, estado, rotas) entram aqui quando o projeto for criado.
 
+### 3.1 Organização e consumo da API (T5 / US-003)
+
+- React + Vite com TypeScript em modo estrito. Preservar os diretórios `src/componentes/`, `src/paginas/` e `src/hooks/` introduzidos na T4; não criar diretórios paralelos `components/` ou `pages/`.
+- `src/api/schema.d.ts` é gerado de `backend/docs/openapi.json` por `npm run gerar:tipos`. Aliases podem referenciar esses modelos; não copiar interfaces de domínio manualmente.
+- `src/api/` concentra configuração, HTTP, erros e funções de adaptação. Páginas não usam `fetch` diretamente. `VITE_USE_MOCK=true` seleciona fixtures; qualquer outro valor seleciona HTTP em `VITE_API_URL` (base com `/api/v1`). Não trocar erro HTTP por sucesso mock automaticamente.
+- `frontend/mocks/` contém as fixtures canônicas. `npm run mocks:sync` copia os JSONs para `src/mocks/` antes de desenvolvimento, testes e build. Editar a origem; manter a cópia sincronizada.
+- `src/texts/pt-BR.ts` centraliza textos de interface e mensagens dos códigos da seção 8 do contrato. Conteúdo educacional recebido da API fica nos dados, sem tradução ou reescrita pelo front.
+- React Router preserva `/login`, `/cadastro`, `/upload`, `/resultado/:id`, `/historico` e `/perfil`. `recente` é uma rota local para o resultado recém-gerado, mantido apenas em memória; não é um identificador retornado pela API.
+- Estados da prova de conceito derivam da requisição assíncrona, com cancelamento e nova tentativa. Parâmetros de demonstração e controles de cenários só são aplicados com mock ativo.
+- O cliente aceita um provedor de Bearer token em memória (`src/api/sessao.ts`); não persiste tokens e não faz logs de credenciais. Integração das páginas de autenticação pertence ao fluxo de acesso.
+- Executar `npm run typecheck`, `npm run lint`, `npm test` e `npm run build`. Fixtures são verificadas contra o JSON Schema do OpenAPI e contra o exemplo completo de Flashcards em docs/05.
+- O ADR-0012 e docs/09 são referenciados pelo planejamento, mas não estão presentes nesta revisão do repositório. Este registro documenta a implementação existente; não presume o conteúdo ou a aprovação dos documentos ausentes.
+
 ## 4. API
 
 - Rotas em português, minúsculas, no plural, com hífen: `/testes-nivel`, `/adaptacoes`.

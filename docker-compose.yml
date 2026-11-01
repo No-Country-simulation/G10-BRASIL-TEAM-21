@@ -54,7 +54,8 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: /api/v1 # Como passará pelo Nginx, a URL fica relativa
+      VITE_USE_MOCK: ${VITE_USE_MOCK:-true}
+      VITE_API_URL: ${VITE_API_URL:-/api/v1}
 
   nginx:
     build:
