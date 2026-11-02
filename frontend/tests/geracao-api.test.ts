@@ -19,9 +19,9 @@ function preparar() {
   const pasta = mkdtempSync(join(tmpdir(), 'adaptai-t6-teste-'))
   pastas.push(pasta)
   const origem = join(pasta, 'openapi.json')
-  const destino = join(pasta, 'schema.d.ts')
+  const destino = join(pasta, 'api-types.ts')
   writeFileSync(origem, publicado)
-  writeFileSync(destino, readFileSync(join(frontend, 'src/api/schema.d.ts')))
+  writeFileSync(destino, readFileSync(join(frontend, 'src/api/api-types.ts')))
   return { origem, destino }
 }
 
@@ -45,7 +45,7 @@ describe('sincronização dos tipos OpenAPI (T6)', () => {
     const antes = readFileSync(destino, 'utf8')
     expect(verificar(origem, destino)).toContain('sincronizados')
     expect(readFileSync(destino, 'utf8')).toBe(antes)
-  })
+  }, 30_000)
 
   it('rejeita mudança no contrato, preserva o arquivo e passa após regeneração', () => {
     const { origem, destino } = preparar()

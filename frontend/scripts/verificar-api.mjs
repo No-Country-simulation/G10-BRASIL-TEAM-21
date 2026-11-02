@@ -15,7 +15,7 @@ const origem = resolve(
 )
 const destino = resolve(
   values.output ??
-    fileURLToPath(new URL('../src/api/schema.d.ts', import.meta.url)),
+    fileURLToPath(new URL('../src/api/api-types.ts', import.meta.url)),
 )
 const gerador = fileURLToPath(
   new URL('../node_modules/openapi-typescript/bin/cli.js', import.meta.url),
