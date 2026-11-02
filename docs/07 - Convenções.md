@@ -41,7 +41,7 @@
 
 ### 3.1 Organização e consumo da API (T5 / US-003)
 
-- React + Vite com TypeScript em modo estrito. Preservar os diretórios `src/componentes/`, `src/paginas/` e `src/hooks/` introduzidos na T4; não criar diretórios paralelos `components/` ou `pages/`.
+- React + Vite com TypeScript em modo estrito. Preservar os diretórios `src/components/`, `src/pages/` e `src/hooks/` introduzidos na T4; não criar diretórios paralelos `components/` ou `pages/`.
 - `src/api/schema.d.ts` é gerado de `backend/docs/openapi.json` por `npm run gerar:tipos`. Aliases podem referenciar esses modelos; não copiar interfaces de domínio manualmente.
 - `src/api/` concentra configuração, HTTP, erros e funções de adaptação. Páginas não usam `fetch` diretamente. `VITE_USE_MOCK=true` seleciona fixtures; qualquer outro valor seleciona HTTP em `VITE_API_URL` (base com `/api/v1`). Não trocar erro HTTP por sucesso mock automaticamente.
 - `frontend/mocks/` contém as fixtures canônicas. `npm run mocks:sync` copia os JSONs para `src/mocks/` antes de desenvolvimento, testes e build. Editar a origem; manter a cópia sincronizada.

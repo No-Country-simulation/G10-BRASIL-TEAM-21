@@ -4,7 +4,7 @@ import { apiAdaptacoes } from '../api/adaptacoes'
 import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'
 import type { AdaptacaoRequest } from '../api/tipos'
-import { EstadoTela } from '../componentes/EstadoTela'
+import { EstadoTela } from '../components/EstadoTela'
 import { useEstadoMock } from '../hooks/useEstadoMock'
 import { textos } from '../texts/pt-BR'
 
