@@ -1381,6 +1381,45 @@
         ],
         "title": "Body_upload_documento_api_v1_documentos_upload_post"
       },
+      "BuscaChunksRequest": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Pergunta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pergunta"
+        ],
+        "title": "BuscaChunksRequest",
+        "description": "Pergunta usada para localizar trechos relevantes."
+      },
+      "BuscaChunksResponse": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "title": "Pergunta"
+          },
+          "resultados": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkBuscaResponse"
+            },
+            "type": "array",
+            "title": "Resultados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pergunta",
+          "resultados"
+        ],
+        "title": "BuscaChunksResponse",
+        "description": "Até três trechos mais relevantes para a pergunta."
+      },
       "CadastroRequest": {
         "properties": {
           "nome": {
@@ -1441,45 +1480,6 @@
           "nivel_atual"
         ],
         "title": "CadastroResponse"
-      },
-      "BuscaChunksRequest": {
-        "properties": {
-          "pergunta": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Pergunta"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "pergunta"
-        ],
-        "title": "BuscaChunksRequest",
-        "description": "Pergunta usada para localizar trechos relevantes."
-      },
-      "BuscaChunksResponse": {
-        "properties": {
-          "pergunta": {
-            "type": "string",
-            "title": "Pergunta"
-          },
-          "resultados": {
-            "items": {
-              "$ref": "#/components/schemas/ChunkBuscaResponse"
-            },
-            "type": "array",
-            "title": "Resultados"
-          }
-        },
-        "type": "object",
-        "required": [
-          "pergunta",
-          "resultados"
-        ],
-        "title": "BuscaChunksResponse",
-        "description": "Até três trechos mais relevantes para a pergunta."
       },
       "ChunkBuscaResponse": {
         "properties": {
