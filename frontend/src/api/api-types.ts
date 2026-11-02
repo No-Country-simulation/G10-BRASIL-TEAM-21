@@ -157,7 +157,10 @@ export interface paths {
         /** Listar Adaptacoes */
         get: operations["listar_adaptacoes_api_v1_adaptacoes_get"];
         put?: never;
-        /** Criar Adaptacao */
+        /**
+         * Criar Adaptacao
+         * @description Aciona o Agente para gerar a adaptação usando RAG e LLM.
+         */
         post: operations["criar_adaptacao_api_v1_adaptacoes_post"];
         delete?: never;
         options?: never;

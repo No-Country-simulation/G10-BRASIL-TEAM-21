@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process'
+﻿import { execFile } from 'node:child_process'
 import { mkdtemp, readFile, rm, rmdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -28,7 +28,7 @@ async function verificar() {
   } catch (erro) {
     if (erro.code !== 'ENOENT') throw erro
     throw new Error(
-      'Tipos da API ausentes. Execute npm run gen:api e inclua src/api/schema.d.ts no PR.',
+      'Tipos da API ausentes. Execute npm run gen:api e inclua src/api/api-types.ts no PR.',
     )
   }
 
@@ -39,7 +39,7 @@ async function verificar() {
     const esperado = await readFile(temporario, 'utf8')
     if (atual !== esperado) {
       throw new Error(
-        'Tipos da API desatualizados. Execute npm run gen:api e inclua o contrato e src/api/schema.d.ts no mesmo PR.',
+        'Tipos da API desatualizados. Execute npm run gen:api e inclua o contrato e src/api/api-types.ts no mesmo PR.',
       )
     }
     console.log('Tipos da API sincronizados com o OpenAPI.')
@@ -55,3 +55,4 @@ try {
   console.error(erro.message)
   process.exitCode = 1
 }
+
