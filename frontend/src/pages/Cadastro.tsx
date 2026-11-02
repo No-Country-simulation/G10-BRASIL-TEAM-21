@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { EstadoTela } from '../componentes/EstadoTela'
+import { EstadoTela } from '../components/EstadoTela'
 import { useEstadoMock } from '../hooks/useEstadoMock'
 import { textos } from '../texts/pt-BR'
 

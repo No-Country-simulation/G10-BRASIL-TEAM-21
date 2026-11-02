@@ -133,4 +133,41 @@ describe('cliente de API', () => {
       textos.erros.TOKEN_EXPIRADO,
     )
   })
+    it.each([
+    ['REQUISICAO_INVALIDA', 400],
+    ['NAO_AUTENTICADO', 401],
+    ['TOKEN_EXPIRADO', 401],
+    ['CREDENCIAIS_INVALIDAS', 401],
+    ['RECURSO_NAO_ENCONTRADO', 404],
+    ['EMAIL_JA_CADASTRADO', 409],
+    ['TESTE_NIVEL_INDISPONIVEL', 409],
+    ['ARQUIVO_MUITO_GRANDE', 413],
+    ['FORMATO_NAO_SUPORTADO', 415],
+    ['VALIDACAO_FALHOU', 422],
+    ['DOCUMENTO_SEM_TEXTO', 422],
+    ['CONCEITOS_INSUFICIENTES', 422],
+    ['LLM_INDISPONIVEL', 502],
+    ['BANCO_INDISPONIVEL', 503],
+    ['ARMAZENAMENTO_INDISPONIVEL', 503],
+    ['TEMPO_ESGOTADO', 504],
+  ] as const)(
+    'normaliza o erro %s com status HTTP %i',
+    (codigo, status) => {
+      const erro = normalizarErro(
+        {
+          status: 'erro',
+          codigo,
+          mensagem: 'Mensagem técnica do backend',
+          detalhes: [],
+          request_id: 'req-teste-001',
+        },
+        status,
+      )
+
+      expect(erro.codigo).toBe(codigo)
+      expect(erro.status).toBe(status)
+      expect(erro.message).toBe(textos.erros[codigo])
+      expect(erro.requestId).toBe('req-teste-001')
+    },
+  )
 })

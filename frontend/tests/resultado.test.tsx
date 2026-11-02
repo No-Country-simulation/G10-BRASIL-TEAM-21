@@ -9,7 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../src/App'
-import { PacoteAdaptacao } from '../src/componentes/PacoteAdaptacao'
+import { PacoteAdaptacao } from '../src/components/PacoteAdaptacao'
 import { montarExemplo } from '../src/api/mock'
 import { textos } from '../src/texts/pt-BR'
 import { apiAdaptacoes } from '../src/api/adaptacoes'
