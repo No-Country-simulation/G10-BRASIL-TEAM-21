@@ -33,11 +33,18 @@ class Settings(BaseSettings):
     oci_namespace: str | None = None
     oci_bucket: str = "adaptai-conteudos-educativos"
 
-    llm_provider: str | None = None  # ADR-0011, em decisão
+    llm_provider: str | None = None
     llm_model: str | None = None
     llm_api_key: str | None = None
+
+    # NOVAS VARIÁVEIS PARA A T11:
+    llm_timeout_s: int = 60
+    groq_api_key: str | None = None
+    llm_fallback_provider: str | None = "groq"
+    llm_fallback_model: str | None = "llama-3.1-8b-instant"
+
     embedding_model: str | None = None
-    embedding_dim: int | None = None  # dimensão da coluna vector(N) (ADR-0014)
+    embedding_dim: int | None = None
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -46,4 +53,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore

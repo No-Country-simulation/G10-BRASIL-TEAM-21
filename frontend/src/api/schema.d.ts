@@ -431,6 +431,24 @@ export interface components {
             /** Arquivo */
             arquivo: string;
         };
+        /**
+         * BuscaChunksRequest
+         * @description Pergunta usada para localizar trechos relevantes.
+         */
+        BuscaChunksRequest: {
+            /** Pergunta */
+            pergunta: string;
+        };
+        /**
+         * BuscaChunksResponse
+         * @description Até três trechos mais relevantes para a pergunta.
+         */
+        BuscaChunksResponse: {
+            /** Pergunta */
+            pergunta: string;
+            /** Resultados */
+            resultados: components["schemas"]["ChunkBuscaResponse"][];
+        };
         /** CadastroRequest */
         CadastroRequest: {
             /** Nome */
@@ -453,24 +471,6 @@ export interface components {
             /** Email */
             email: string;
             nivel_atual: components["schemas"]["Nivel"];
-        };
-        /**
-         * BuscaChunksRequest
-         * @description Pergunta usada para localizar trechos relevantes.
-         */
-        BuscaChunksRequest: {
-            /** Pergunta */
-            pergunta: string;
-        };
-        /**
-         * BuscaChunksResponse
-         * @description Até três trechos mais relevantes para a pergunta.
-         */
-        BuscaChunksResponse: {
-            /** Pergunta */
-            pergunta: string;
-            /** Resultados */
-            resultados: components["schemas"]["ChunkBuscaResponse"][];
         };
         /**
          * ChunkBuscaResponse
