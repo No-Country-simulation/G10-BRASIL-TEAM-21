@@ -5,8 +5,8 @@ import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'
 import type { CenarioMock } from '../api/mock'
 import type { Adaptacao } from '../api/tipos'
-import { EstadoTela } from '../componentes/EstadoTela'
-import { PacoteAdaptacao } from '../componentes/PacoteAdaptacao'
+import { EstadoTela } from '../components/EstadoTela'
+import { PacoteAdaptacao } from '../components/PacoteAdaptacao'
 import { textos } from '../texts/pt-BR'
 
 const cenarios = [

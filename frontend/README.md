@@ -65,8 +65,8 @@ frontend/
   src/
     api/                            # configuração, HTTP, sessão, erros e adaptações
       schema.d.ts                   # gerado e versionado, não editar manualmente
-    componentes/                    # Layout, EstadoTela, PacoteAdaptacao
-    paginas/                        # páginas da T4
+    components/                    # Layout, EstadoTela, PacoteAdaptacao
+    pages/                        # páginas da T4
     hooks/                          # estados de demonstração das prévias
     mocks/                          # cópia sincronizada, não editar manualmente
     texts/pt-BR.ts                   # todos os rótulos e mensagens de interface
