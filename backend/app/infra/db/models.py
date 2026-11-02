@@ -113,7 +113,7 @@ class Chunk(Base):
         ForeignKey("documentos.documento_id", ondelete="CASCADE"),
         primary_key=True,
     )
-    chunk_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    chunk_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False)
     texto: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(HALFVEC(3072), nullable=True)

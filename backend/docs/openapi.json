@@ -497,6 +497,7 @@
           "adaptacoes"
         ],
         "summary": "Criar Adaptacao",
+        "description": "Aciona o Agente para gerar a adaptação usando RAG e LLM.",
         "operationId": "criar_adaptacao_api_v1_adaptacoes_post",
         "security": [
           {

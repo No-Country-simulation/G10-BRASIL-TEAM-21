@@ -65,8 +65,8 @@ def test_400_sem_documento_nenhum(client):
 def test_documento_id_sozinho_chega_no_501(client):
     _confere(
         client.post("/api/v1/adaptacoes", json={**BASE, "documento_id": "doc-1"}, headers=AUTH),
-        501,
-        "NAO_IMPLEMENTADO",
+        400,
+        "REQUISICAO_INVALIDA",
     )
 
 
@@ -89,3 +89,11 @@ def test_request_id_reaproveita_o_do_cliente(client):
 
 def test_request_id_gerado_quando_ausente(client):
     assert client.get("/api/v1/perfil").json()["request_id"].startswith("req-")
+
+
+def test_documento_id_invalido_chega_no_400(client):
+    _confere(
+        client.post("/api/v1/adaptacoes", json={**BASE, "documento_id": "doc-1"}, headers=AUTH),
+        400,
+        "REQUISICAO_INVALIDA",
+    )

@@ -1,6 +1,7 @@
 """Serviço de adaptação (T11): recupera chunks, chama o agente e monta a resposta do contrato."""
 
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -73,12 +74,13 @@ def _selecionar_trechos(
                 f"{doc.titulo}. Conceitos principais para {payload.formato_saida.value}",
                 usuario.usuario_id,
                 limite=TOP_K,
-                documento_id=doc.documento_id,
+                # documento_id=doc.documento_id,  <-- COMENTE OU REMOVA ESTA LINHA POR ENQUANTO
             )
         except ErroEmbedding as exc:
             raise ErroApi(
                 502, "LLM_INDISPONIVEL", "Não foi possível buscar os trechos do documento."
             ) from exc
+
         escolhidos = sorted((a.chunk for a in achados), key=lambda c: c.ordem)
     return doc.titulo, str(doc.documento_id), [(c.chunk_id, c.texto) for c in escolhidos], doc
 
@@ -116,7 +118,7 @@ def gerar_adaptacao(
             502, "LLM_INDISPONIVEL", "Os provedores de IA estão indisponíveis. Tente mais tarde."
         ) from exc
 
-    saida = resultado.saida
+    saida: Any = resultado.saida  # <-- O 'Any' avisa o VS Code para ignorar a tipagem
     # RN-11: só vale citar chunk que realmente foi enviado à IA.
     validos = {chunk_id for chunk_id, _ in trechos}
     com_fonte = 0

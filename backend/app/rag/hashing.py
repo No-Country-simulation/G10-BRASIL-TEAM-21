@@ -25,4 +25,4 @@ def gerar_chunk_id(
         Hash SHA-256 em formato hexadecimal.
     """
     base = f"{document_id}|{chunk_index}|{texto_chunk}"
-    return hashlib.sha256(base.encode("utf-8")).hexdigest()
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()[:50]
