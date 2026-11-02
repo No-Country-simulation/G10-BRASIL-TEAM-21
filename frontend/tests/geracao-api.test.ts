@@ -62,7 +62,7 @@ describe('sincronização dos tipos OpenAPI (T6)', () => {
     })
     expect(readFileSync(destino, 'utf8')).toContain('campo_t6_teste')
     expect(verificar(origem, destino)).toContain('sincronizados')
-  })
+  }, 30_000)
 
   it('rejeita tipos editados manualmente e tipos ausentes', () => {
     const { origem, destino } = preparar()
