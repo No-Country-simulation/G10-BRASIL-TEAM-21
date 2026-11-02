@@ -25,7 +25,9 @@ export function montarExemplo({
   }
   if (cenario === 'vazio') dados.conteudo_adaptado.itens = []
   if (cenario === 'pendente' || cenario === 'falha')
-    dados.armazenamento_oci.status_upload = cenario
+    if (dados.armazenamento_oci) {
+      dados.armazenamento_oci.status_upload = cenario
+    }
   return dados
 }
 

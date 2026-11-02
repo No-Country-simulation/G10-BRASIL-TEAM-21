@@ -88,7 +88,7 @@ export function PacoteAdaptacao({ dados }: { dados: Adaptacao }) {
   const m = dados.metadados
   const q = dados.avaliacao_qualidade
   const trilha = dados.trilha_evolucao
-  const status = dados.armazenamento_oci.status_upload
+  const status = dados.armazenamento_oci?.status_upload ?? 'pendente'
   return (
     <>
       <h1>{dados.conteudo_adaptado.titulo}</h1>

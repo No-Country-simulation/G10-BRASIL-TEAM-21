@@ -1,7 +1,11 @@
-import type { components } from './schema'
+import type { components } from './api-types'
 
-// Apenas aliases: os modelos de domínio são gerados pelo OpenAPI.
-export type Adaptacao = components['schemas']['AdaptacaoResponse']
+// Tipos derivados automaticamente do contrato OpenAPI.
+export type AdaptacaoResponse = components['schemas']['AdaptacaoResponse']
+export type LoginRequest = components['schemas']['LoginRequest']
+
+// Aliases utilizados atualmente pela aplicação.
+export type Adaptacao = AdaptacaoResponse
 export type AdaptacaoRequest = components['schemas']['AdaptacaoRequest']
 export type ErroResposta = components['schemas']['ErroResposta']
 export type Documento = components['schemas']['DocumentoResponse']
