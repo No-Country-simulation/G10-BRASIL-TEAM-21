@@ -1,15 +1,18 @@
-"""Serviço de adaptação (T11): recupera chunks, chama o agente e monta a resposta do contrato."""
+"""Serviço de adaptação: recupera fontes, usa cache e persiste o resultado gerado."""
 
+import hashlib
+import json
 import uuid
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..agents.adaptacao import AgenteFalhouError, executar_cadeia
 from ..agents.prompts import montar_sistema, montar_usuario
 from ..api._errors import ErroApi
-from ..infra.db.models import Chunk, Documento, Usuario
+from ..infra.db.models import Adaptacao, Chunk, Documento, Usuario
 from ..ports.llm import LLMProvider
 from ..rag.chunker import dividir_em_chunks
 from ..rag.embeddings import ErroEmbedding
@@ -43,10 +46,36 @@ def _selecionar_trechos(
 ) -> tuple[str, str, list[tuple[str, str]], Documento | None]:
     """Devolve (titulo, id_do_documento, [(chunk_id, texto)], documento) para o prompt."""
     if payload.documento_id is None:
-        # Texto enviado direto: fatia em memória (sem embeddings, nada é gravado).
-        blocos = dividir_em_chunks(payload.documento_conteudo or "")[:MAX_CHUNKS_CONTEXTO]
+        # Documento inline também precisa de um registro-pai, pois Adaptacao exige FK.
+        conteudo = payload.documento_conteudo or ""
+        bytes_conteudo = conteudo.encode("utf-8")
+        hash_conteudo = hashlib.sha256(bytes_conteudo).hexdigest()
+        doc = db.scalars(
+            select(Documento).where(
+                Documento.usuario_id == usuario.usuario_id,
+                Documento.hash_conteudo == hash_conteudo,
+            )
+        ).first()
+        if doc is None:
+            doc = Documento(
+                usuario_id=usuario.usuario_id,
+                titulo=payload.documento_titulo or "Texto enviado",
+                formato_origem="texto",
+                hash_conteudo=hash_conteudo,
+                tamanho_bytes=len(bytes_conteudo),
+                status_upload="concluido",
+            )
+            db.add(doc)
+            db.flush()
+
+        blocos = dividir_em_chunks(conteudo)[:MAX_CHUNKS_CONTEXTO]
         trechos = [(f"chunk-{i + 1:03d}", b.texto) for i, b in enumerate(blocos)]
-        return payload.documento_titulo or "Texto enviado", "texto-enviado", trechos, None
+        return (
+            payload.documento_titulo or doc.titulo,
+            str(doc.documento_id),
+            trechos,
+            doc,
+        )
 
     try:
         doc_uuid = uuid.UUID(payload.documento_id)
@@ -85,6 +114,42 @@ def _selecionar_trechos(
     return doc.titulo, str(doc.documento_id), [(c.chunk_id, c.texto) for c in escolhidos], doc
 
 
+def _gerar_cache_key(
+    usuario: Usuario,
+    documento: Documento,
+    titulo_prompt: str,
+    payload: AdaptacaoRequest,
+    incluir_gabarito: bool,
+) -> str:
+    """Hash canônico de todos os dados que podem alterar a adaptação."""
+    dados = {
+        "schema": "1.0",
+        "documento_id": str(documento.documento_id),
+        "documento_hash": documento.hash_conteudo,
+        "documento_titulo": titulo_prompt,
+        "perfil_destinatario": payload.perfil_destinatario.value,
+        "formato_saida": payload.formato_saida.value,
+        "nicho_setor": payload.nicho_setor.value,
+        "nivel_detalhe": payload.nivel_detalhe.value,
+        "incluir_analogias": payload.incluir_analogias,
+        "incluir_microlearning": payload.incluir_microlearning,
+        "incluir_gabarito": incluir_gabarito,
+        "usuario_id": str(usuario.usuario_id),
+    }
+    canonico = json.dumps(dados, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonico.encode("utf-8")).hexdigest()
+
+
+def _resposta_do_cache(
+    adaptacao: Adaptacao, request_id: str, incluir_gabarito: bool
+) -> AdaptacaoResponse:
+    """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
+    resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
+        update={"request_id": request_id, "cache_hit": True}
+    )
+    return resposta if incluir_gabarito else ocultar_gabarito(resposta)
+
+
 def gerar_adaptacao(
     db: Session,
     usuario: Usuario,
@@ -92,10 +157,24 @@ def gerar_adaptacao(
     cadeia: list[LLMProvider],
     request_id: str,
     incluir_gabarito: bool = False,
+    forcar_reprocessamento: bool = False,
 ) -> AdaptacaoResponse:
     titulo_doc, documento_ref, trechos, doc = _selecionar_trechos(db, usuario, payload)
     if not trechos:
         raise ErroApi(400, "REQUISICAO_INVALIDA", "O documento não tem conteúdo para adaptar.")
+    if doc is None:
+        raise ErroApi(500, "ERRO_INTERNO", "Não foi possível registrar o documento da adaptação.")
+
+    cache_key = _gerar_cache_key(usuario, doc, titulo_doc, payload, incluir_gabarito)
+    adaptacao_existente = db.scalars(
+        select(Adaptacao).where(
+            Adaptacao.usuario_id == usuario.usuario_id,
+            Adaptacao.cache_key == cache_key,
+            Adaptacao.status_upload == "concluido",
+        )
+    ).first()
+    if adaptacao_existente is not None and not forcar_reprocessamento:
+        return _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
 
     schema = SAIDA_POR_FORMATO[payload.formato_saida]
     sistema = montar_sistema(
@@ -166,4 +245,44 @@ def gerar_adaptacao(
             status_upload=StatusUpload.PENDENTE,
         ),
     )
+    # Guarda a resposta completa (inclusive gabarito); a saída HTTP continua respeitando
+    # incluir_gabarito. A opção também faz parte da chave, impedindo colisões de cache.
+    if adaptacao_existente is None:
+        adaptacao_existente = Adaptacao(
+            usuario_id=usuario.usuario_id,
+            documento_id=doc.documento_id,
+            perfil_destinatario=payload.perfil_destinatario.value,
+            formato_saida=payload.formato_saida.value,
+            nicho_setor=payload.nicho_setor.value,
+            nivel_detalhe=payload.nivel_detalhe.value,
+            nivel_do_usuario_no_momento=usuario.nivel_declarado,
+            cache_key=cache_key,
+            resultado=resposta.model_dump(mode="json"),
+            ancoragem_fonte_score=ancoragem,
+            status_upload="concluido",
+        )
+        db.add(adaptacao_existente)
+    else:
+        # O índice único é por usuário + cache_key: reprocessar atualiza essa entrada.
+        adaptacao_existente.resultado = resposta.model_dump(mode="json")
+        adaptacao_existente.ancoragem_fonte_score = ancoragem
+        adaptacao_existente.status_upload = "concluido"
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Duas requisições iguais podem terminar a geração ao mesmo tempo. Nesse caso,
+        # devolver a adaptação que venceu a inserção concorrente, em vez de falhar.
+        concorrente = db.scalars(
+            select(Adaptacao).where(
+                Adaptacao.usuario_id == usuario.usuario_id,
+                Adaptacao.cache_key == cache_key,
+                Adaptacao.status_upload == "concluido",
+            )
+        ).first()
+        if concorrente is None or forcar_reprocessamento:
+            raise
+        return _resposta_do_cache(concorrente, request_id, incluir_gabarito)
+
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
