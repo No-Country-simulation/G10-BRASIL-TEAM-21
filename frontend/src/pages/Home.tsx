@@ -171,20 +171,24 @@ function Home() {
 
   /* Navegação por teclado nas abas (setas, Home, End) */
   const handleTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const last = formatos.length - 1
-    let next = activeFormat
+  const last = formatos.length - 1
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-      next = activeFormat === last ? 0 : activeFormat + 1
-    } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-      next = activeFormat === 0 ? last : activeFormat - 1
-    } else if (event.key === 'Home') {
-      next = 0
-    } else if (event.key === 'End') {
-      next = last
-    } else {
-      return
-    }
+  const next =
+    event.key === 'ArrowDown' || event.key === 'ArrowRight'
+      ? activeFormat === last
+        ? 0
+        : activeFormat + 1
+      : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
+        ? activeFormat === 0
+          ? last
+          : activeFormat - 1
+        : event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? last
+            : null
+
+    if (next === null) return
 
     event.preventDefault()
     setActiveFormat(next)
