@@ -3,10 +3,34 @@ export const textos = {
   rodape: 'AdaptAI · Aprendizagem adaptativa',
   navegacao: {
     aria: 'Navegação principal',
+    inicio: 'Início',
     upload: 'Novo conteúdo',
     historico: 'Histórico',
     perfil: 'Meu perfil',
     login: 'Entrar',
+  },
+  home: {
+    titulo: 'Bem-vindo ao AdaptAI!',
+    descricao: 'Sua aprendizagem, do seu jeito.',
+    chamada: 'Aprenda de forma personalizada.',
+    chamadaDescricao:
+      'Transforme seus materiais em experiências de aprendizagem adaptadas ao seu perfil.',
+    novaAdaptacao: 'Começar nova adaptação',
+    materiais: 'Materiais enviados',
+    adaptacoes: 'Adaptações concluídas',
+    atividades: 'Atividades recentes',
+    atividadesDescricao:
+      'Acompanhe os conteúdos que você adaptou recentemente.',
+    verHistorico: 'Ver histórico',
+    nivel: 'Seu nível de conhecimento',
+    nivelDescricao:
+      'Acompanhe seu perfil de aprendizagem.',
+    vazioAtividades: 'Você ainda não possui atividades recentes.',
+  },
+  tema: {
+    claro: 'Modo claro',
+    escuro: 'Modo escuro',
+    alternar: 'Alternar tema',
   },
   estados: {
     carregando: 'Carregando informações…',

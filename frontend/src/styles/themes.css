@@ -1,0 +1,109 @@
+/* =========================================
+   TEMAS - ADAPTAI: Fonte única das cores: app e Home leem daqui
+========================================= */
+
+/* TEMA CLARO */
+[data-bs-theme="light"] {
+  color-scheme: light;
+
+  /* Bootstrap */
+  --bs-body-bg: #f8f9fc;
+  --bs-body-color: #141a2e;
+  --bs-secondary-color: #5b6479;
+  --bs-border-color: #dfe4ef;
+  --bs-primary: #2f55d4;
+  --bs-primary-rgb: 47, 85, 212;
+  --bs-link-color: #2f55d4;
+  --bs-link-hover-color: #2543b0;
+  --bs-focus-ring-color: rgba(47, 85, 212, 0.25);
+
+  /* Marca */
+  --app-primary: #2f55d4;
+  --app-primary-hover: #2543b0;
+  --app-brand: #1f3a9e;
+  --app-accent: #8fa8ff;
+  --app-link: #2f55d4; /* texto em destaque (links, rótulos) */
+
+  /* Superfícies e texto */
+  --app-page-bg: #f8f9fc;
+  --app-sidebar-bg: #ffffff;
+  --app-card-bg: #ffffff;
+  --app-surface: #eef1f8;
+  --app-border: #dfe4ef;
+  --app-text: #141a2e;
+  --app-text-secondary: #5b6479;
+
+  /* Bloco de destaque (ex.: CTA da Home) */
+  --app-cta-bg: #0f1b4c;
+  --app-cta-text: #c9d3f5;
+}
+
+/* TEMA ESCURO */
+[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  /* Bootstrap */
+  --bs-body-bg: #0d1220;
+  --bs-body-color: #e8ecf8;
+  --bs-secondary-color: #9aa4bd;
+  --bs-border-color: #26304a;
+  --bs-primary: #4f6ef0;
+  --bs-primary-rgb: 79, 110, 240;
+  --bs-link-color: #8aa4ff;
+  --bs-link-hover-color: #b4c4ff;
+  --bs-focus-ring-color: rgba(79, 110, 240, 0.35);
+
+  /* Marca */
+  --app-primary: #4f6ef0;
+  --app-primary-hover: #6783f5;
+  --app-brand: #8aa4ff;
+  --app-accent: #b4c4ff;
+  --app-link: #8aa4ff;
+
+  /* Superfícies e texto */
+  --app-page-bg: #0d1220;
+  --app-sidebar-bg: #0f1626;
+  --app-card-bg: #161e33;
+  --app-surface: #131a2c;
+  --app-border: #26304a;
+  --app-text: #e8ecf8;
+  --app-text-secondary: #9aa4bd;
+
+  /* Bloco de destaque */
+  --app-cta-bg: #111a33;
+  --app-cta-text: #9aa4bd;
+}
+
+/* ESTILOS GERAIS */
+body {
+  background: var(--app-page-bg);
+  color: var(--app-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Botão primário do Bootstrap seguindo a paleta */
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--app-primary);
+  --bs-btn-border-color: var(--app-primary);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--app-primary-hover);
+  --bs-btn-hover-border-color: var(--app-primary-hover);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--app-primary-hover);
+  --bs-btn-active-border-color: var(--app-primary-hover);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--app-primary);
+  --bs-btn-disabled-border-color: var(--app-primary);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--app-link);
+  --bs-btn-border-color: var(--app-primary);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--app-primary);
+  --bs-btn-hover-border-color: var(--app-primary);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--app-primary-hover);
+  --bs-btn-active-border-color: var(--app-primary-hover);
+}
