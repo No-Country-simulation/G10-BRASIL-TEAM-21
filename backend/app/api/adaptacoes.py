@@ -2,14 +2,15 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..infra import criar_cadeia
-from ..infra.db.models import Usuario
+from ..infra.db.models import Adaptacao, Documento, Usuario
 from ..schemas.adaptacao import AdaptacaoRequest, AdaptacaoResponse
 from ..schemas.common import ErroResposta
-from ..schemas.listagens import AdaptacoesListResponse
+from ..schemas.listagens import AdaptacaoResumo, AdaptacoesListResponse
 from ..schemas.perfil import RespostasQuizRequest, RespostasQuizResponse
 
 # ⚠️ CORREÇÃO DO IMPORT: O arquivo está em services, não em agents
@@ -56,6 +57,7 @@ async def criar_adaptacao(
             cadeia=cadeia,
             request_id=request_id,
             incluir_gabarito=incluir_gabarito,
+            forcar_reprocessamento=forcar_reprocessamento,
         )
         return resposta
 
@@ -66,13 +68,45 @@ async def criar_adaptacao(
         raise ErroApi(500, "ERRO_IA", "Ocorreu um erro interno ao processar a adaptação.") from e
 
 
-@router.get("", response_model=AdaptacoesListResponse, responses=ERR)
+@router.get("", response_model=AdaptacoesListResponse)
 async def listar_adaptacoes(
     limite: int = Query(20, ge=1, le=100),
     deslocamento: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> AdaptacoesListResponse:
-    raise NaoImplementadoError()
+    """Lista as adaptações do usuário, das mais recentes para as mais antigas."""
+    filtro_usuario = Adaptacao.usuario_id == current_user.usuario_id
+    total = db.scalar(select(func.count()).select_from(Adaptacao).where(filtro_usuario)) or 0
+
+    consulta = (
+        select(Adaptacao, Documento.titulo, Documento.dominio_conhecimento)
+        .join(Documento, Documento.documento_id == Adaptacao.documento_id)
+        .where(filtro_usuario)
+        .order_by(Adaptacao.criado_em.desc(), Adaptacao.adaptacao_id.desc())
+        .limit(limite)
+        .offset(deslocamento)
+    )
+    linhas = db.execute(consulta).all()
+
+    return AdaptacoesListResponse(
+        itens=[
+            AdaptacaoResumo(
+                adaptacao_id=str(adaptacao.adaptacao_id),
+                documento_id=str(adaptacao.documento_id),
+                titulo=titulo,
+                perfil_aplicado=adaptacao.perfil_destinatario,
+                formato_gerado=adaptacao.formato_saida,
+                nicho_aplicado=adaptacao.nicho_setor,
+                dominio_conhecimento=dominio,
+                ancoragem_fonte_score=float(adaptacao.ancoragem_fonte_score),
+                status_upload=adaptacao.status_upload,
+                criado_em=adaptacao.criado_em,
+            )
+            for adaptacao, titulo, dominio in linhas
+        ],
+        total=total,
+    )
 
 
 @router.get("/{adaptacao_id}", response_model=AdaptacaoResponse, responses=ERR)

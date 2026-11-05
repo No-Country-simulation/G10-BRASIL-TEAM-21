@@ -574,6 +574,7 @@
           "adaptacoes"
         ],
         "summary": "Listar Adaptacoes",
+        "description": "Lista as adaptações do usuário, das mais recentes para as mais antigas.",
         "operationId": "listar_adaptacoes_api_v1_adaptacoes_get",
         "security": [
           {
@@ -615,16 +616,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
           },
           "422": {
             "description": "Validation Error",
