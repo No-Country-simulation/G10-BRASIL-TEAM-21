@@ -195,8 +195,16 @@ function Home() {
     <div className="home-page">
       <header className="home-header">
         <nav className="home-nav home-container">
+
           <a className="home-logo" href="#inicio" aria-label="AdaptAI, início">
-            Adapt<span>AI</span>
+            <img
+              src="/Icon.png"
+              alt=""
+              className="adaptai"
+            />
+            <span>
+              Adapt<span>AI</span>
+            </span>
           </a>
 
           <div className="home-nav-links">
