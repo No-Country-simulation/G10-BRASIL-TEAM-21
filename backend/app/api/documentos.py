@@ -51,13 +51,16 @@ CORPO_DOCUMENTO = {
 }
 
 
+# A rota original que o front usa
 @router.post("/upload", response_model=UploadDocumentoResponse, status_code=201)
+# A rota que o edital pede (apontando para a mesma função)
+@router.post("", response_model=UploadDocumentoResponse, status_code=201)
 async def upload_documento(
     arquivo: UploadFile = File(...),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UploadDocumentoResponse:
-    """Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks."""
+    """Extrai e fatia PDF/TXT/MD; persiste os metadados e devolve os chunks."""
     nome = arquivo.filename or ""
     if not nome:
         raise ErroApi(400, "REQUISICAO_INVALIDA", "O arquivo precisa ter um nome.")
@@ -67,7 +70,7 @@ async def upload_documento(
     conteudo = await arquivo.read(limite_bytes + 1)
 
     if len(conteudo) > limite_bytes:
-        raise ErroApi(400, "ARQUIVO_MUITO_GRANDE", "O arquivo excede o limite de upload.")
+        raise ErroApi(413, "ARQUIVO_MUITO_GRANDE", "O arquivo excede o limite de upload.")
 
     try:
         # Chama o serviço para fazer o trabalho pesado
