@@ -30,5 +30,7 @@ def decodificar_token(token: str) -> UUID | None:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         sub = payload.get("sub")
         return UUID(sub) if sub else None
-    except Exception:
+    except jwt.ExpiredSignatureError:  # <-- CORREÇÃO: Trata expiração
+        return None
+    except jwt.InvalidTokenError:  # <-- CORREÇÃO: Trata token inválido
         return None
