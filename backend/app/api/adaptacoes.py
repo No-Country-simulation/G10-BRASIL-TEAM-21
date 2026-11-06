@@ -56,6 +56,7 @@ async def criar_adaptacao(
             cadeia=cadeia,
             request_id=request_id,
             incluir_gabarito=incluir_gabarito,
+            forcar_reprocessamento=forcar_reprocessamento,
         )
         return resposta
 
