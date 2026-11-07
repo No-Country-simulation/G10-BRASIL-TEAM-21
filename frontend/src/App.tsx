@@ -1,5 +1,4 @@
 ﻿import { Navigate, Route, Routes } from 'react-router-dom'
-import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
