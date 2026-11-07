@@ -8,6 +8,7 @@ import Resultado from './pages/Resultado'
 import Historico from './pages/Historico'
 import Perfil from './pages/Perfil'
 import './App.css'
+import RotaProtegida from './components/auth/RotaProtegida'
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
       <Route path="/cadastro" element={<Cadastro />} />
 
       {/* Área interna da plataforma */}
-      <Route element={<Layout />}>
+      <Route element={<RotaProtegida />}>
         <Route path="/upload" element={<Upload />} />
         <Route path="/resultado/:id" element={<Resultado />} />
         <Route path="/historico" element={<Historico />} />

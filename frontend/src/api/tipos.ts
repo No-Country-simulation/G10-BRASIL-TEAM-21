@@ -9,5 +9,7 @@ export type Adaptacao = AdaptacaoResponse
 export type AdaptacaoRequest = components['schemas']['AdaptacaoRequest']
 export type ErroResposta = components['schemas']['ErroResposta']
 export type Documento = components['schemas']['DocumentoResponse']
-export type ItemConteudo =
-  components['schemas']['ConteudoAdaptado']['itens'][number]
+export type ItemConteudo = components['schemas']['ConteudoAdaptado']['itens'][number]
+export type LoginResponse =  components['schemas']['LoginResponse']
+export type CadastroRequest = components['schemas']['CadastroRequest']
+export type CadastroResponse = components['schemas']['CadastroResponse']
