@@ -154,7 +154,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Listar Adaptacoes */
+        /**
+         * Listar Adaptacoes
+         * @description Lista as adaptações do usuário, das mais recentes para as mais antigas.
+         */
         get: operations["listar_adaptacoes_api_v1_adaptacoes_get"];
         put?: never;
         /**
@@ -1364,15 +1367,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };

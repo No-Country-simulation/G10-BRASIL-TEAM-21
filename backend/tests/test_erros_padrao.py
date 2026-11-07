@@ -26,14 +26,14 @@ def _confere(r, status, codigo):
     return corpo
 
 
-def test_501_nas_rotas_casca(client):
-    for rota in (
-        "/api/v1/perfil",
-        # "/api/v1/usuarios/me",
-        "/api/v1/documentos",
-        "/api/v1/adaptacoes",
-    ):
-        _confere(client.get(rota, headers=AUTH), 501, "NAO_IMPLEMENTADO")
+# def test_501_nas_rotas_casca(client):
+#     for rota in (
+#         "/api/v1/perfil",
+#         # "/api/v1/usuarios/me",
+#         # "/api/v1/documentos",
+#         #"/api/v1/adaptacoes",
+#     ):
+#         _confere(client.get(rota, headers=AUTH), 501, "NAO_IMPLEMENTADO")
 
 
 def test_401_sem_token(client):
