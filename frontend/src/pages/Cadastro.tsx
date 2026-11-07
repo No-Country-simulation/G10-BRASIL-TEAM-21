@@ -1,9 +1,9 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiAutenticacao } from '../api/autenticacao'
 import type { CadastroRequest } from '../api/tipos'
+import { AuthLayout } from '../components/auth/AuthLayout'
 import { textos } from '../texts/pt-BR'
 
 export default function Cadastro() {
@@ -13,11 +13,16 @@ export default function Cadastro() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [nivel, setNivel] =
     useState<CadastroRequest['nivel_declarado']>('Iniciante')
 
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+
+  useEffect(() => {
+    document.title = 'Criar conta | AdaptAI'
+  }, [])
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -43,9 +48,7 @@ export default function Cadastro() {
       })
     } catch (erroApi) {
       setErro(
-        erroApi instanceof Error
-          ? erroApi.message
-          : textos.erros.DESCONHECIDO,
+        erroApi instanceof Error ? erroApi.message : textos.erros.DESCONHECIDO,
       )
     } finally {
       setCarregando(false)
@@ -53,57 +56,89 @@ export default function Cadastro() {
   }
 
   return (
-    <main className="pagina-autenticacao">
-      <section className="painel-autenticacao">
-        <h1>{t.criar}</h1>
-        <p>{t.criarDescricao}</p>
+    <AuthLayout
+      modo="cadastro"
+      titulo={t.lateralCadastro.titulo}
+      descricao={t.lateralCadastro.descricao}
+      destaques={t.lateralCadastro.destaques}
+    >
+      <h1>{t.criar}</h1>
+      <p className="auth-card-description">{t.criarDescricao}</p>
 
-        {erro && (
-          <p className="aviso" role="alert">
-            {erro}
-          </p>
-        )}
+      {erro && (
+        <p className="auth-alert auth-alert-error" role="alert">
+          <i className="bi bi-exclamation-circle" aria-hidden="true" />
+          <span>{erro}</span>
+        </p>
+      )}
 
-        <form onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-field">
           <label htmlFor="nome">{t.nome}</label>
           <input
             id="nome"
             name="nome"
+            className="auth-input"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             autoComplete="name"
             required
             maxLength={200}
           />
+        </div>
 
+        <div className="auth-field">
           <label htmlFor="email">{t.email}</label>
           <input
             id="email"
             name="email"
+            className="auth-input"
             type="email"
+            placeholder={t.placeholderEmail}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             required
           />
+        </div>
 
+        <div className="auth-field">
           <label htmlFor="senha">{t.senha}</label>
-          <input
-            id="senha"
-            name="senha"
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            maxLength={128}
-          />
+          <div className="auth-password">
+            <input
+              id="senha"
+              name="senha"
+              className="auth-input"
+              type={mostrarSenha ? 'text' : 'password'}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              autoComplete="new-password"
+              aria-describedby="senha-dica"
+              required
+              minLength={8}
+              maxLength={128}
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setMostrarSenha((atual) => !atual)}
+              aria-label={mostrarSenha ? t.ocultarSenha : t.mostrarSenha}
+              aria-pressed={mostrarSenha}
+            >
+              <i className={`bi ${mostrarSenha ? 'bi-eye-slash' : 'bi-eye'}`} />
+            </button>
+          </div>
+          <span id="senha-dica" className="auth-field-hint">
+            {t.dicaSenha}
+          </span>
+        </div>
 
+        <div className="auth-field">
           <label htmlFor="nivel">{t.nivel}</label>
           <select
             id="nivel"
             name="nivel_declarado"
+            className="auth-select"
             value={nivel}
             onChange={(e) =>
               setNivel(e.target.value as CadastroRequest['nivel_declarado'])
@@ -117,16 +152,20 @@ export default function Cadastro() {
                 </option>
               ))}
           </select>
+        </div>
 
-          <button type="submit" disabled={carregando}>
-            {carregando ? 'Criando conta...' : t.criar}
-          </button>
-        </form>
+        <button
+          type="submit"
+          className="auth-button auth-button-block"
+          disabled={carregando}
+        >
+          {carregando ? 'Criando conta...' : t.criar}
+        </button>
+      </form>
 
-        <p>
-          {t.temConta} <Link to="/login">{t.entrar}</Link>
-        </p>
-      </section>
-    </main>
+      <p className="auth-switch">
+        {t.temConta} <Link to="/login">{t.entrar}</Link>
+      </p>
+    </AuthLayout>
   )
 }

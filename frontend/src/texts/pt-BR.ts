@@ -86,6 +86,30 @@ export const textos = {
     temConta: 'Já tem uma conta?',
     semConta: 'Ainda não tem conta?',
     cadastrar: 'Cadastre-se',
+    mostrarSenha: 'Mostrar senha',
+    ocultarSenha: 'Ocultar senha',
+    ou: 'ou',
+    dicaSenha: 'Mínimo de 8 caracteres.',
+    lateralLogin: {
+      titulo: 'Bem-vindo de volta.',
+      descricao:
+        'Continue de onde parou: seus materiais, adaptações e progresso estão te esperando.',
+      destaques: [
+        'Explicações no seu nível de conhecimento',
+        'Sempre com o trecho original à vista',
+        'Seu histórico e progresso em um só lugar',
+      ],
+    },
+    lateralCadastro: {
+      titulo: 'Documentação densa. Aprendizado seu.',
+      descricao:
+        'Crie sua conta e transforme o primeiro documento em tutoriais, flashcards, quizzes e resumos.',
+      destaques: [
+        'Cinco níveis, de iniciante a especialista',
+        'Cinco formatos de estudo para cada documento',
+        'Todo conteúdo gerado a partir do seu material',
+      ],
+    },
     vazioLogin: 'O formulário de acesso não está disponível.',
     vazioCadastro: 'O formulário de cadastro não está disponível.',
     wireframe:

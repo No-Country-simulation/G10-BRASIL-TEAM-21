@@ -1,115 +1,156 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiAutenticacao } from '../api/autenticacao'
 import { definirTokenAcesso } from '../api/sessao'
+import { AuthLayout } from '../components/auth/AuthLayout'
 import { textos } from '../texts/pt-BR'
 import { configuracaoDemo } from '../config/demo'
 
+type LoginState = { mensagem?: string; email?: string } | null
+
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const t = textos.auth
 
-  const [email, setEmail] = useState('')
+  /* Dados enviados pelo Cadastro após criar a conta */
+  const estado = location.state as LoginState
+  const mensagem = estado?.mensagem ?? ''
+
+  const [email, setEmail] = useState(estado?.email ?? '')
   const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
 
+  useEffect(() => {
+    document.title = 'Entrar | AdaptAI'
+  }, [])
+
   async function realizarLogin(emailLogin: string, senhaLogin: string) {
-  setErro('')
-  setCarregando(true)
+    setErro('')
+    setCarregando(true)
 
-  try {
-    const resposta = await apiAutenticacao.login({
-      email: emailLogin,
-      senha: senhaLogin,
-    })
+    try {
+      const resposta = await apiAutenticacao.login({
+        email: emailLogin,
+        senha: senhaLogin,
+      })
 
-    definirTokenAcesso(resposta.access_token)
+      definirTokenAcesso(resposta.access_token)
 
-    navigate('/upload', { replace: true })
-  } catch (error) {
-    setErro(
-      error instanceof Error
-        ? error.message
-        : 'Não foi possível realizar o login. Tente novamente.',
-    )
-  } finally {
-    setCarregando(false)
+      navigate('/upload', { replace: true })
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível realizar o login. Tente novamente.',
+      )
+    } finally {
+      setCarregando(false)
+    }
   }
-}
 
-async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-  e.preventDefault()
-  await realizarLogin(email, senha)
-}
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    await realizarLogin(email, senha)
+  }
 
-async function handleDemoLogin() {
-  await realizarLogin(
-    configuracaoDemo.email,
-    configuracaoDemo.senha,
-  )
-}
-  
-return (
-  <main className="pagina-autenticacao">
-    <section className="painel-autenticacao">
-      <h1>{textos.marca}</h1>
+  async function handleDemoLogin() {
+    await realizarLogin(configuracaoDemo.email, configuracaoDemo.senha)
+  }
 
-      <p>{t.introducao}</p>
+  return (
+    <AuthLayout
+      modo="login"
+      titulo={t.lateralLogin.titulo}
+      descricao={t.lateralLogin.descricao}
+      destaques={t.lateralLogin.destaques}
+    >
+      <h1>{t.entrar}</h1>
+      <p className="auth-card-description">{t.introducao}</p>
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="email">{t.email}</label>
+      {mensagem && !erro && (
+        <p className="auth-alert auth-alert-success" role="status">
+          <i className="bi bi-check-circle" aria-hidden="true" />
+          <span>{mensagem}</span>
+        </p>
+      )}
 
-        <input
-          id="email"
-          type="email"
-          placeholder={t.placeholderEmail}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          required
-        />
+      {erro && (
+        <p className="auth-alert auth-alert-error" role="alert">
+          <i className="bi bi-exclamation-circle" aria-hidden="true" />
+          <span>{erro}</span>
+        </p>
+      )}
 
-        <label htmlFor="senha">{t.senha}</label>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-field">
+          <label htmlFor="email">{t.email}</label>
+          <input
+            id="email"
+            className="auth-input"
+            type="email"
+            placeholder={t.placeholderEmail}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+        </div>
 
-        <input
-          id="senha"
-          type="password"
-          placeholder={t.placeholderSenha}
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
+        <div className="auth-field">
+          <label htmlFor="senha">{t.senha}</label>
+          <div className="auth-password">
+            <input
+              id="senha"
+              className="auth-input"
+              type={mostrarSenha ? 'text' : 'password'}
+              placeholder={t.placeholderSenha}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setMostrarSenha((atual) => !atual)}
+              aria-label={mostrarSenha ? t.ocultarSenha : t.mostrarSenha}
+              aria-pressed={mostrarSenha}
+            >
+              <i className={`bi ${mostrarSenha ? 'bi-eye-slash' : 'bi-eye'}`} />
+            </button>
+          </div>
+        </div>
 
-        {erro && (
-          <p className="text-danger" role="alert">
-            {erro}
-          </p>
-        )}
-
-        <button type="submit" disabled={carregando}>
+        <button
+          type="submit"
+          className="auth-button auth-button-block"
+          disabled={carregando}
+        >
           {carregando ? 'Entrando...' : t.entrar}
         </button>
 
         {configuracaoDemo.habilitado && (
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={carregando}
-          >
-            {carregando
-              ? 'Entrando...'
-              : 'Entrar com conta de demonstração'}
-          </button>
+          <>
+            <div className="auth-divider">{t.ou}</div>
+            <button
+              type="button"
+              className="auth-button auth-button-secondary auth-button-block"
+              onClick={handleDemoLogin}
+              disabled={carregando}
+            >
+              {carregando ? 'Entrando...' : 'Entrar com conta de demonstração'}
+            </button>
+          </>
         )}
       </form>
 
-      <p>
+      <p className="auth-switch">
         {t.semConta} <Link to="/cadastro">{t.cadastrar}</Link>
       </p>
-    </section>
-  </main>
-)
+    </AuthLayout>
+  )
 }
