@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError  # <-- IMPORTANTE: Adicionado
 from sqlalchemy.orm import Session
 
 from ..core.security import EXPIRA_MINUTOS, criar_token_jwt, hash_senha, verificar_senha
@@ -15,13 +16,12 @@ from ..schemas.auth import (
     UsuarioMeResponse,
 )
 from ..schemas.common import ErroResposta
-from ..schemas.enums import Nivel  # Importando o Enum
+from ..schemas.enums import Nivel
 from ._deps import get_current_user
 from ._errors import ErroApi
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Correção 1: Tipagem correta do dicionário de erros
 ERR: dict[int | str, dict[str, Any]] = {401: {"model": ErroResposta}, 400: {"model": ErroResposta}}
 
 
@@ -42,9 +42,13 @@ async def cadastro(payload: CadastroRequest, db: Session = Depends(get_db)) -> C
         senha_hash=hash_senha(payload.senha),
         nivel_declarado=payload.nivel_declarado.value,
     )
-    db.add(novo_user)
-    db.commit()
-    db.refresh(novo_user)
+    try:
+        db.add(novo_user)
+        db.commit()
+        db.refresh(novo_user)
+    except IntegrityError as exc:  # <-- CORREÇÃO DE CONCORRÊNCIA AQUI
+        db.rollback()
+        raise ErroApi(400, "EMAIL_EXISTE", "Este e-mail já está cadastrado.") from exc
 
     return CadastroResponse(
         usuario_id=str(novo_user.usuario_id),
@@ -73,7 +77,6 @@ async def logout(_: Usuario = Depends(get_current_user)) -> None:
     return None
 
 
-# -------- usuário logado --------
 usuarios_router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 

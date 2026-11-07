@@ -103,7 +103,7 @@ def _selecionar_trechos(
                 f"{doc.titulo}. Conceitos principais para {payload.formato_saida.value}",
                 usuario.usuario_id,
                 limite=TOP_K,
-                # documento_id=doc.documento_id,  <-- COMENTE OU REMOVA ESTA LINHA POR ENQUANTO
+                documento_id=doc.documento_id,
             )
         except ErroEmbedding as exc:
             raise ErroApi(

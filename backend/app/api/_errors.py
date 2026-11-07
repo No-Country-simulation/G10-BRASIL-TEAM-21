@@ -1,5 +1,6 @@
 """Erros padronizados (contrato, secao 8)."""
 
+import logging  # <-- IMPORTANTE: Adicionado
 import re
 import uuid
 
@@ -7,6 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)  # <-- IMPORTANTE: Adicionado
 
 _RID_VALIDO = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 _CODIGOS = {400: "REQUISICAO_INVALIDA", 401: "NAO_AUTENTICADO", 404: "RECURSO_NAO_ENCONTRADO"}
@@ -92,6 +95,9 @@ def registrar_erros(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _500(request: Request, exc: Exception):
+        # CORREÇÃO AQUI: Adicionado o logger.exception para salvar o erro no log
+        logger.exception("Erro interno não tratado na rota: %s", request.url.path)
+
         return _resposta(
             request, 500, "ERRO_INTERNO", "Erro interno. Tente novamente em instantes."
         )

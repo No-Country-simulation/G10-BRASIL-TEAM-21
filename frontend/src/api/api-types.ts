@@ -72,6 +72,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Documentos */
+        get: operations["listar_documentos_api_v1_documentos_get"];
+        put?: never;
+        /** Criar Documento */
+        post: operations["criar_documento_api_v1_documentos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documentos/upload": {
         parameters: {
             query?: never;
@@ -83,7 +101,7 @@ export interface paths {
         put?: never;
         /**
          * Upload Documento
-         * @description Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks.
+         * @description Extrai e fatia PDF/TXT/MD; persiste os metadados e devolve os chunks.
          */
         post: operations["upload_documento_api_v1_documentos_upload_post"];
         delete?: never;
@@ -106,24 +124,6 @@ export interface paths {
          * @description Busca os três chunks semanticamente mais próximos da pergunta.
          */
         post: operations["buscar_documentos_api_v1_documentos_buscar_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/documentos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar Documentos */
-        get: operations["listar_documentos_api_v1_documentos_get"];
-        put?: never;
-        /** Criar Documento */
-        post: operations["criar_documento_api_v1_documentos_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -431,6 +431,11 @@ export interface components {
             itens_ref: number[];
             /** Objetivo */
             objetivo: string;
+        };
+        /** Body_upload_documento_api_v1_documentos_post */
+        Body_upload_documento_api_v1_documentos_post: {
+            /** Arquivo */
+            arquivo: string;
         };
         /** Body_upload_documento_api_v1_documentos_upload_post */
         Body_upload_documento_api_v1_documentos_upload_post: {
@@ -1147,72 +1152,6 @@ export interface operations {
             };
         };
     };
-    upload_documento_api_v1_documentos_upload_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_upload_documento_api_v1_documentos_upload_post"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UploadDocumentoResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    buscar_documentos_api_v1_documentos_buscar_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BuscaChunksRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BuscaChunksResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     listar_documentos_api_v1_documentos_get: {
         parameters: {
             query?: {
@@ -1295,6 +1234,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
+        };
+    };
+    upload_documento_api_v1_documentos_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_documento_api_v1_documentos_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadDocumentoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    buscar_documentos_api_v1_documentos_buscar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuscaChunksRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuscaChunksResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
