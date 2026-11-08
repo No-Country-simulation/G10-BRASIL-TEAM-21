@@ -197,7 +197,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Responder Quiz */
+        /**
+         * Responder Quiz
+         * @description Corrige o quiz com o gabarito salvo, devolve a nota e concede XP (T13.1 e T13.2).
+         */
         post: operations["responder_quiz_api_v1_adaptacoes__adaptacao_id__respostas_post"];
         delete?: never;
         options?: never;
@@ -959,6 +962,11 @@ export interface components {
             data_upload: string;
             /** Total Chunks */
             total_chunks: number;
+            /**
+             * Xp Ganho
+             * @default 0
+             */
+            xp_ganho: number;
             /** Chunks */
             chunks: components["schemas"]["ChunkIngeridoResponse"][];
         };
@@ -1487,6 +1495,24 @@ export interface operations {
                     "application/json": components["schemas"]["RespostasQuizResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1494,15 +1520,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };

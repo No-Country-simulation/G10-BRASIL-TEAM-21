@@ -29,6 +29,9 @@ from ..schemas.adaptacao import (
 from ..schemas.adaptacao_output import SAIDA_POR_FORMATO
 from ..schemas.enums import DominioConhecimento, Nivel, StatusUpload
 
+# IMPORT DA T13
+from . import xp
+
 # Doc 04: documentos de até ~12 chunks vão inteiros para o contexto; acima disso, busca top-k.
 MAX_CHUNKS_CONTEXTO = 12
 TOP_K = 6
@@ -173,6 +176,7 @@ def gerar_adaptacao(
             Adaptacao.status_upload == "concluido",
         )
     ).first()
+
     if adaptacao_existente is not None and not forcar_reprocessamento:
         return _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
 
@@ -197,8 +201,7 @@ def gerar_adaptacao(
             502, "LLM_INDISPONIVEL", "Os provedores de IA estão indisponíveis. Tente mais tarde."
         ) from exc
 
-    saida: Any = resultado.saida  # <-- O 'Any' avisa o VS Code para ignorar a tipagem
-    # RN-11: só vale citar chunk que realmente foi enviado à IA.
+    saida: Any = resultado.saida
     validos = {chunk_id for chunk_id, _ in trechos}
     com_fonte = 0
     for item in saida.itens:
@@ -245,8 +248,12 @@ def gerar_adaptacao(
             status_upload=StatusUpload.PENDENTE,
         ),
     )
-    # Guarda a resposta completa (inclusive gabarito); a saída HTTP continua respeitando
-    # incluir_gabarito. A opção também faz parte da chave, impedindo colisões de cache.
+
+    # --- LÓGICA DE PERSISTÊNCIA (T12) + XP (T13) ---
+
+    # Variável para armazenar o XP que foi ganho nesta sessão
+    xp_ganho = 0
+
     if adaptacao_existente is None:
         adaptacao_existente = Adaptacao(
             usuario_id=usuario.usuario_id,
@@ -262,18 +269,23 @@ def gerar_adaptacao(
             status_upload="concluido",
         )
         db.add(adaptacao_existente)
+        db.flush()  # Garante que a adaptacao_id exista antes de dar o XP
+
+        # AQUI DÁ O XP DA T13! (+5 XP)
+        xp_ganho = xp.registrar_geracao(db, usuario, adaptacao_existente.adaptacao_id)
     else:
-        # O índice único é por usuário + cache_key: reprocessar atualiza essa entrada.
         adaptacao_existente.resultado = resposta.model_dump(mode="json")
         adaptacao_existente.ancoragem_fonte_score = ancoragem
         adaptacao_existente.status_upload = "concluido"
+
+    # Atualiza a trilha na resposta
+    perfil = xp.perfil_ou_padrao(db, usuario)
+    resposta.trilha_evolucao = xp.montar_trilha(perfil, xp_ganho_sessao=xp_ganho)
 
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        # Duas requisições iguais podem terminar a geração ao mesmo tempo. Nesse caso,
-        # devolver a adaptação que venceu a inserção concorrente, em vez de falhar.
         concorrente = db.scalars(
             select(Adaptacao).where(
                 Adaptacao.usuario_id == usuario.usuario_id,

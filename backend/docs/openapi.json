@@ -703,6 +703,7 @@
           "adaptacoes"
         ],
         "summary": "Responder Quiz",
+        "description": "Corrige o quiz com o gabarito salvo, devolve a nota e concede XP (T13.1 e T13.2).",
         "operationId": "responder_quiz_api_v1_adaptacoes__adaptacao_id__respostas_post",
         "security": [
           {
@@ -741,7 +742,7 @@
               }
             }
           },
-          "501": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -749,7 +750,17 @@
                 }
               }
             },
-            "description": "Not Implemented"
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "422": {
             "description": "Validation Error",
@@ -2833,6 +2844,11 @@
           "total_chunks": {
             "type": "integer",
             "title": "Total Chunks"
+          },
+          "xp_ganho": {
+            "type": "integer",
+            "title": "Xp Ganho",
+            "default": 0
           },
           "chunks": {
             "items": {

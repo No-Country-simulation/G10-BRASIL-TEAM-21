@@ -15,6 +15,7 @@ from ..schemas.perfil import RespostasQuizRequest, RespostasQuizResponse
 
 # ⚠️ CORREÇÃO DO IMPORT: O arquivo está em services, não em agents
 from ..services.adaptacao import gerar_adaptacao
+from ..services.quiz import responder_quiz as corrigir_quiz
 from ._deps import get_current_user, get_db
 from ._errors import ErroApi, NaoImplementadoError
 
@@ -25,7 +26,7 @@ ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
 
 @router.post("", response_model=AdaptacaoResponse, responses=ERR)
-async def criar_adaptacao(
+def criar_adaptacao(  # `def`: LLM e banco bloqueiam; o FastAPI roda em thread (ADR-0016)
     request: Request,  # Adicionado para pegar o request_id
     payload: AdaptacaoRequest,
     incluir_gabarito: bool = Query(False),
@@ -118,14 +119,22 @@ async def obter_adaptacao(
     raise NaoImplementadoError()
 
 
+ERR_QUIZ: dict[int | str, dict[str, Any]] = {
+    400: {"model": ErroResposta},
+    404: {"model": ErroResposta},
+}
+
+
 @router.post(
     "/{adaptacao_id}/respostas",
     response_model=RespostasQuizResponse,
-    responses=ERR,
+    responses=ERR_QUIZ,
 )
-async def responder_quiz(
+def responder_quiz(
     adaptacao_id: str,
     payload: RespostasQuizRequest,
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> RespostasQuizResponse:
-    raise NaoImplementadoError()
+    """Corrige o quiz com o gabarito salvo, devolve a nota e concede XP (T13.1 e T13.2)."""
+    return corrigir_quiz(db, current_user, adaptacao_id, payload.respostas)
