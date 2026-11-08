@@ -24,7 +24,8 @@ export function Sidebar({ aberto, aoNavegar }: SidebarProps) {
   async function sair() {
     try {
       await apiAutenticacao.logout()
-    } catch {
+    } catch (error) {
+      console.error('Não foi possível encerrar a sessão no servidor:', error)
     } finally {
       definirTokenAcesso(null)
       navigate('/login', { replace: true })
