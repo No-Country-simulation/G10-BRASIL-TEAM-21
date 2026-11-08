@@ -2,93 +2,45 @@
   min-height: 100vh;
 }
 
-.cabecalho {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 20px 6%;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.marca {
-  color: #3730a3;
-  font-size: 1.4rem;
-  font-weight: 800;
-}
-
-.navegacao {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.navegacao a {
-  color: #4b5563;
-  font-weight: 600;
-}
-
-.navegacao a.active {
-  color: #4338ca;
-}
-
-.conteudo-principal {
-  width: min(100% - 32px, 960px);
-  margin: 40px auto;
-  min-height: 70vh;
-}
-
-.rodape {
-  padding: 24px;
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
 .pagina h1 {
   margin-top: 0;
   font-size: clamp(1.7rem, 4vw, 2.3rem);
 }
 
 .pagina > p {
-  color: #64748b;
+  color: var(--app-text-secondary);
   line-height: 1.6;
 }
 
 .pagina form,
-.cartao,
-.painel-autenticacao {
+.cartao {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 24px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 6px 24px rgb(15 23 42 / 4%);
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 27, 76, 0.04);
 }
 
 .pagina form {
   margin-top: 24px;
 }
 
-.pagina label,
-.painel-autenticacao label {
+.pagina label {
   font-weight: 600;
   font-size: 0.95rem;
 }
 
 .pagina input:not([type='checkbox']):not([type='file']),
-.pagina select,
-.painel-autenticacao input,
-.painel-autenticacao select {
+.pagina select {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  color: #172033;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
 }
 
@@ -96,20 +48,18 @@
   margin-right: 8px;
 }
 
-.pagina button,
-.painel-autenticacao button {
+.pagina button {
   min-height: 46px;
   padding: 12px 18px;
   color: #fff;
-  background: #4f46e5;
+  background: var(--app-primary);
   border: 0;
   border-radius: 8px;
   font-weight: 700;
 }
 
-.pagina button:hover,
-.painel-autenticacao button:hover {
-  background: #4338ca;
+.pagina button:hover {
+  background: var(--app-primary-hover);
 }
 
 .cartao {
@@ -124,16 +74,16 @@
 .aviso {
   margin-top: 20px;
   padding: 16px;
-  color: #854d0e;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
+  color: var(--bs-warning-text-emphasis, #664d03);
+  background: color-mix(in srgb, #f5a524 14%, transparent);
+  border: 1px solid color-mix(in srgb, #f5a524 40%, transparent);
   border-radius: 10px;
 }
 
 progress {
   width: 100%;
   height: 12px;
-  accent-color: #4f46e5;
+  accent-color: var(--app-primary);
 }
 
 .lista-cartoes {
@@ -142,39 +92,15 @@ progress {
   gap: 16px;
 }
 
-.pagina-autenticacao {
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
-  padding: 24px;
-  background: #eef2ff;
-}
-
-.painel-autenticacao {
-  width: min(100%, 440px);
-  padding: 32px;
-}
-
-.painel-autenticacao h1 {
-  margin: 0;
-  color: #3730a3;
-}
-
-.painel-autenticacao form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .estado {
   display: grid;
   justify-items: start;
   gap: 14px;
   margin: 24px 0;
   padding: 28px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--app-border);
   border-radius: 12px;
-  background: white;
+  background: var(--app-card-bg);
 }
 .estado p,
 .cartao p {
@@ -184,8 +110,8 @@ progress {
 .carregando {
   width: 24px;
   height: 24px;
-  border: 3px solid #c7d2fe;
-  border-top-color: #4f46e5;
+  border: 3px solid var(--app-border);
+  border-top-color: var(--app-primary);
   border-radius: 50%;
   animation: girar 1s linear infinite;
 }
@@ -214,7 +140,7 @@ progress {
   gap: 12px;
   margin: 0 0 28px;
   padding: 18px;
-  border: 1px dashed #a5b4fc;
+  border: 1px dashed var(--app-border);
   border-radius: 12px;
 }
 .cenarios select {
@@ -223,23 +149,25 @@ progress {
 }
 .sucesso {
   padding: 12px;
-  color: #166534;
-  background: #dcfce7;
+  color: var(--bs-success-text-emphasis, #0f5132);
+  background: color-mix(in srgb, #198754 14%, transparent);
   border-radius: 8px;
 }
 .pagina textarea {
   padding: 12px;
   width: 100%;
-  border: 1px solid #cbd5e1;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   resize: vertical;
 }
 .cartao article + article {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--app-border);
   margin-top: 16px;
 }
 :focus-visible {
-  outline: 3px solid #818cf8;
+  outline: 2px solid var(--app-primary);
   outline-offset: 3px;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -257,17 +185,3 @@ progress {
   }
 }
 
-@media (max-width: 600px) {
-  .cabecalho {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .navegacao {
-    gap: 14px;
-  }
-
-  .conteudo-principal {
-    margin-top: 24px;
-  }
-}

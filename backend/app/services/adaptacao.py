@@ -1,20 +1,18 @@
-"""Serviço de adaptação (T11): recupera chunks, chama o agente e monta a resposta do contrato."""
+"""Serviço de adaptação: recupera fontes, usa cache e persiste o resultado gerado."""
 
 import hashlib
-from ..infra.db.models import Adaptacao, Chunk, Documento, Usuario
-from ..schemas.enums import DominioConhecimento, FormatoSaida, Nivel, StatusUpload
-from . import xp
-
+import json
 import uuid
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..agents.adaptacao import AgenteFalhouError, executar_cadeia
 from ..agents.prompts import montar_sistema, montar_usuario
 from ..api._errors import ErroApi
-from ..infra.db.models import Chunk, Documento, Usuario
+from ..infra.db.models import Adaptacao, Chunk, Documento, Usuario
 from ..ports.llm import LLMProvider
 from ..rag.chunker import dividir_em_chunks
 from ..rag.embeddings import ErroEmbedding
@@ -30,6 +28,9 @@ from ..schemas.adaptacao import (
 )
 from ..schemas.adaptacao_output import SAIDA_POR_FORMATO
 from ..schemas.enums import DominioConhecimento, Nivel, StatusUpload
+
+# IMPORT DA T13
+from . import xp
 
 # Doc 04: documentos de até ~12 chunks vão inteiros para o contexto; acima disso, busca top-k.
 MAX_CHUNKS_CONTEXTO = 12
@@ -48,10 +49,36 @@ def _selecionar_trechos(
 ) -> tuple[str, str, list[tuple[str, str]], Documento | None]:
     """Devolve (titulo, id_do_documento, [(chunk_id, texto)], documento) para o prompt."""
     if payload.documento_id is None:
-        # Texto enviado direto: fatia em memória (sem embeddings, nada é gravado).
-        blocos = dividir_em_chunks(payload.documento_conteudo or "")[:MAX_CHUNKS_CONTEXTO]
+        # Documento inline também precisa de um registro-pai, pois Adaptacao exige FK.
+        conteudo = payload.documento_conteudo or ""
+        bytes_conteudo = conteudo.encode("utf-8")
+        hash_conteudo = hashlib.sha256(bytes_conteudo).hexdigest()
+        doc = db.scalars(
+            select(Documento).where(
+                Documento.usuario_id == usuario.usuario_id,
+                Documento.hash_conteudo == hash_conteudo,
+            )
+        ).first()
+        if doc is None:
+            doc = Documento(
+                usuario_id=usuario.usuario_id,
+                titulo=payload.documento_titulo or "Texto enviado",
+                formato_origem="texto",
+                hash_conteudo=hash_conteudo,
+                tamanho_bytes=len(bytes_conteudo),
+                status_upload="concluido",
+            )
+            db.add(doc)
+            db.flush()
+
+        blocos = dividir_em_chunks(conteudo)[:MAX_CHUNKS_CONTEXTO]
         trechos = [(f"chunk-{i + 1:03d}", b.texto) for i, b in enumerate(blocos)]
-        return payload.documento_titulo or "Texto enviado", "texto-enviado", trechos, None
+        return (
+            payload.documento_titulo or doc.titulo,
+            str(doc.documento_id),
+            trechos,
+            doc,
+        )
 
     try:
         doc_uuid = uuid.UUID(payload.documento_id)
@@ -79,7 +106,7 @@ def _selecionar_trechos(
                 f"{doc.titulo}. Conceitos principais para {payload.formato_saida.value}",
                 usuario.usuario_id,
                 limite=TOP_K,
-                # documento_id=doc.documento_id,  <-- COMENTE OU REMOVA ESTA LINHA POR ENQUANTO
+                documento_id=doc.documento_id,
             )
         except ErroEmbedding as exc:
             raise ErroApi(
@@ -89,44 +116,43 @@ def _selecionar_trechos(
         escolhidos = sorted((a.chunk for a in achados), key=lambda c: c.ordem)
     return doc.titulo, str(doc.documento_id), [(c.chunk_id, c.texto) for c in escolhidos], doc
 
-def _documento_do_texto(db: Session, usuario: Usuario, payload: AdaptacaoRequest) -> Documento:
-    """Texto enviado direto: guarda como Documento (sem chunks) para a adaptação ter origem.
 
-    A mesma pessoa enviando o mesmo texto reaproveita o documento (hash único por usuário).
-    """
-    conteudo = (payload.documento_conteudo or "").encode("utf-8")
-    hash_conteudo = hashlib.sha256(conteudo).hexdigest()
-    doc = db.scalars(
-        select(Documento).where(
-            Documento.usuario_id == usuario.usuario_id, Documento.hash_conteudo == hash_conteudo
-        )
-    ).first()
-    if doc is None:
-        doc = Documento(
-            usuario_id=usuario.usuario_id,
-            titulo=payload.documento_titulo or "Texto enviado",
-            formato_origem="texto",
-            hash_conteudo=hash_conteudo,
-            tamanho_bytes=len(conteudo),
-        )
-        db.add(doc)
-        db.flush()
-    return doc
+def _gerar_cache_key(
+    usuario: Usuario,
+    documento: Documento,
+    titulo_prompt: str,
+    payload: AdaptacaoRequest,
+    incluir_gabarito: bool,
+) -> str:
+    """Hash canônico de todos os dados que podem alterar a adaptação."""
+    dados = {
+        "schema": "1.0",
+        "documento_id": str(documento.documento_id),
+        "documento_hash": documento.hash_conteudo,
+        "documento_titulo": titulo_prompt,
+        "perfil_destinatario": payload.perfil_destinatario.value,
+        "formato_saida": payload.formato_saida.value,
+        "nicho_setor": payload.nicho_setor.value,
+        "nivel_detalhe": payload.nivel_detalhe.value,
+        "incluir_analogias": payload.incluir_analogias,
+        "incluir_microlearning": payload.incluir_microlearning,
+        "incluir_gabarito": incluir_gabarito,
+        "usuario_id": str(usuario.usuario_id),
+    }
+    canonico = json.dumps(dados, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonico.encode("utf-8")).hexdigest()
 
 
-def _cache_key(doc: Documento, payload: AdaptacaoRequest) -> str:
-    """Identifica documento + parâmetros (RN-20). Por ora só é gravada; o cache vem depois."""
-    base = "|".join(
-        [
-            doc.hash_conteudo,
-            payload.perfil_destinatario.value,
-            payload.formato_saida.value,
-            payload.nicho_setor.value,
-            payload.nivel_detalhe.value,
-        ]
+def _resposta_do_cache(
+    adaptacao: Adaptacao, request_id: str, incluir_gabarito: bool
+) -> AdaptacaoResponse:
+    """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
+    resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
+        update={"request_id": request_id, "cache_hit": True}
     )
-    return hashlib.sha256(base.encode("utf-8")).hexdigest()
-    
+    return resposta if incluir_gabarito else ocultar_gabarito(resposta)
+
+
 def gerar_adaptacao(
     db: Session,
     usuario: Usuario,
@@ -134,10 +160,25 @@ def gerar_adaptacao(
     cadeia: list[LLMProvider],
     request_id: str,
     incluir_gabarito: bool = False,
+    forcar_reprocessamento: bool = False,
 ) -> AdaptacaoResponse:
     titulo_doc, documento_ref, trechos, doc = _selecionar_trechos(db, usuario, payload)
     if not trechos:
         raise ErroApi(400, "REQUISICAO_INVALIDA", "O documento não tem conteúdo para adaptar.")
+    if doc is None:
+        raise ErroApi(500, "ERRO_INTERNO", "Não foi possível registrar o documento da adaptação.")
+
+    cache_key = _gerar_cache_key(usuario, doc, titulo_doc, payload, incluir_gabarito)
+    adaptacao_existente = db.scalars(
+        select(Adaptacao).where(
+            Adaptacao.usuario_id == usuario.usuario_id,
+            Adaptacao.cache_key == cache_key,
+            Adaptacao.status_upload == "concluido",
+        )
+    ).first()
+
+    if adaptacao_existente is not None and not forcar_reprocessamento:
+        return _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
 
     schema = SAIDA_POR_FORMATO[payload.formato_saida]
     sistema = montar_sistema(
@@ -160,8 +201,7 @@ def gerar_adaptacao(
             502, "LLM_INDISPONIVEL", "Os provedores de IA estão indisponíveis. Tente mais tarde."
         ) from exc
 
-    saida: Any = resultado.saida  # <-- O 'Any' avisa o VS Code para ignorar a tipagem
-    # RN-11: só vale citar chunk que realmente foi enviado à IA.
+    saida: Any = resultado.saida
     validos = {chunk_id for chunk_id, _ in trechos}
     com_fonte = 0
     for item in saida.itens:
@@ -208,4 +248,53 @@ def gerar_adaptacao(
             status_upload=StatusUpload.PENDENTE,
         ),
     )
+
+    # --- LÓGICA DE PERSISTÊNCIA (T12) + XP (T13) ---
+
+    # Variável para armazenar o XP que foi ganho nesta sessão
+    xp_ganho = 0
+
+    if adaptacao_existente is None:
+        adaptacao_existente = Adaptacao(
+            usuario_id=usuario.usuario_id,
+            documento_id=doc.documento_id,
+            perfil_destinatario=payload.perfil_destinatario.value,
+            formato_saida=payload.formato_saida.value,
+            nicho_setor=payload.nicho_setor.value,
+            nivel_detalhe=payload.nivel_detalhe.value,
+            nivel_do_usuario_no_momento=usuario.nivel_declarado,
+            cache_key=cache_key,
+            resultado=resposta.model_dump(mode="json"),
+            ancoragem_fonte_score=ancoragem,
+            status_upload="concluido",
+        )
+        db.add(adaptacao_existente)
+        db.flush()  # Garante que a adaptacao_id exista antes de dar o XP
+
+        # AQUI DÁ O XP DA T13! (+5 XP)
+        xp_ganho = xp.registrar_geracao(db, usuario, adaptacao_existente.adaptacao_id)
+    else:
+        adaptacao_existente.resultado = resposta.model_dump(mode="json")
+        adaptacao_existente.ancoragem_fonte_score = ancoragem
+        adaptacao_existente.status_upload = "concluido"
+
+    # Atualiza a trilha na resposta
+    perfil = xp.perfil_ou_padrao(db, usuario)
+    resposta.trilha_evolucao = xp.montar_trilha(perfil, xp_ganho_sessao=xp_ganho)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        concorrente = db.scalars(
+            select(Adaptacao).where(
+                Adaptacao.usuario_id == usuario.usuario_id,
+                Adaptacao.cache_key == cache_key,
+                Adaptacao.status_upload == "concluido",
+            )
+        ).first()
+        if concorrente is None or forcar_reprocessamento:
+            raise
+        return _resposta_do_cache(concorrente, request_id, incluir_gabarito)
+
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiAdaptacoes } from '../api/adaptacoes'
 import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'
@@ -8,13 +8,29 @@ import { EstadoTela } from '../components/EstadoTela'
 import { useEstadoMock } from '../hooks/useEstadoMock'
 import { textos } from '../texts/pt-BR'
 
+function formatoInicialDaUrl(
+  valor: string | null,
+): AdaptacaoRequest['formato_saida'] {
+  const formatos = Object.keys(
+    textos.opcoes.formatos,
+  ) as AdaptacaoRequest['formato_saida'][]
+  const encontrado = formatos.find((formato) => formato === valor)
+
+  if (!encontrado) return 'Flashcards'
+  if (configuracao.usarMock && encontrado !== 'Flashcards') return 'Flashcards'
+
+  return encontrado
+}
+
 export default function Upload() {
+  const [params] = useSearchParams()
   const estado = useEstadoMock()
   const navigate = useNavigate()
   const [origem, setOrigem] = useState('texto')
   const [arquivo, setArquivo] = useState<File>()
-  const [formato, setFormato] =
-    useState<AdaptacaoRequest['formato_saida']>('Flashcards')
+  const [formato, setFormato] = useState<AdaptacaoRequest['formato_saida']>(
+    () => formatoInicialDaUrl(params.get('formato')),
+  )
   const [nivel, setNivel] =
     useState<AdaptacaoRequest['perfil_destinatario']>('Iniciante')
   const [nicho, setNicho] = useState<AdaptacaoRequest['nicho_setor']>('Geral')

@@ -4,10 +4,10 @@
 metadados que só o LLM sabe estimar. O restante da resposta (request_id, armazenamento,
 trilha de XP...) é montado pelo backend.
 """
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .enums import FormatoSaida
 from .itens import (
@@ -32,6 +32,7 @@ class AdaptacaoOutput(BaseModel, Generic[TItem]):  # noqa: UP046 (compatível co
     conceitos_chave: list[str] = Field(min_length=1)
     pre_requisitos: list[str]
     itens: list[TItem] = Field(min_length=1)
+
     @model_validator(mode="after")
     def _quiz_tem_gabarito(self) -> "AdaptacaoOutput[TItem]":
         # O gabarito é guardado no banco e usado para corrigir as respostas (T13). Se o LLM

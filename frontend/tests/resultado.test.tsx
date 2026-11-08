@@ -22,9 +22,12 @@ vi.mock('../src/api/configuracao', () => ({ configuracao: config }))
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  localStorage.removeItem('adaptai-access-token')
 })
+
 beforeEach(() => {
   config.usarMock = true
+  localStorage.setItem('adaptai-access-token', 'token-teste')
 })
 
 function abrir(url: string) {

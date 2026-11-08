@@ -35,7 +35,7 @@ class UploadDocumentoResponse(BaseModel):
     nome: str
     tamanho_bytes: int
     data_upload: datetime
-    total_chunks: int 
+    total_chunks: int
     xp_ganho: int = 0  # +10 só na primeira vez que este documento é enviado
     chunks: list[ChunkIngeridoResponse]
 
