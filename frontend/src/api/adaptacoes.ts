@@ -3,7 +3,7 @@ import { configuracao, type ConfiguracaoApi } from './configuracao'
 import { ErroApi } from './erros'
 import type { OpcoesMock } from './mock'
 import { obterTokenAcesso } from './sessao'
-import type { Adaptacao, AdaptacaoRequest, Documento } from './tipos'
+import type { Adaptacao, AdaptacaoRequest, UploadDocumentoResponse } from './tipos'
 
 export function criarApiAdaptacoes(
   config: ConfiguracaoApi,
@@ -61,14 +61,16 @@ export function criarApiAdaptacoes(
       }
       return recente
     },
-    async enviarDocumento(
-      arquivo: File,
-    ): Promise<Documento> {
-      if (config.usarMock) throw new ErroApi('NAO_IMPLEMENTADO', 501)
+    async enviarDocumento(arquivo: File,): Promise<UploadDocumentoResponse> {
+      if (config.usarMock) {
+        throw new ErroApi('NAO_IMPLEMENTADO', 501)
+      }
+
       const body = new FormData()
       body.set('arquivo', arquivo)
+
       return exigirResposta(
-        requisitar<Documento>('documentos', {
+        requisitar<UploadDocumentoResponse>('documentos/upload', {
           method: 'POST',
           body,
         }),

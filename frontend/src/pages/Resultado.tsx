@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { apiAdaptacoes } from '../api/adaptacoes'
 import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'
@@ -21,6 +21,10 @@ const cenarios = [
 
 export default function Resultado() {
   const { id = 'demo-1' } = useParams()
+  const location = useLocation()
+  const resultadoNavegacao = location.state?.resultado as
+    | Adaptacao
+    | undefined
   const [params, setParams] = useSearchParams()
   const cenario = params.get('cenario') ?? params.get('estado') ?? 'completo'
   const codigo = params.get('codigo') ?? 'BANCO_INDISPONIVEL'
@@ -33,28 +37,48 @@ export default function Resultado() {
   }>()
 
   useEffect(() => {
-    const controller = new AbortController()
-    const opcoes = {
-      cenario: cenarios.includes(cenario as CenarioMock)
-        ? (cenario as CenarioMock)
-        : ('completo' as const),
-      codigo,
+    if (
+      !configuracao.usarMock &&
+      id === 'recente' &&
+      resultadoNavegacao
+    ) {
+      setResposta({
+        chave,
+        dados: resultadoNavegacao,
+      })
+      return
     }
-    apiAdaptacoes.obter(id, controller.signal, opcoes).then(
-      (dados) => {
-        if (!controller.signal.aborted) setResposta({ chave, dados })
-      },
-      (erro: unknown) => {
-        if (!controller.signal.aborted)
-          setResposta({
-            chave,
-            erro:
-              erro instanceof ErroApi ? erro : new ErroApi('RESPOSTA_INVALIDA'),
-          })
-      },
-    )
-    return () => controller.abort()
-  }, [id, chave, cenario, codigo])
+
+  const controller = new AbortController()
+
+  const opcoes = {
+    cenario: cenarios.includes(cenario as CenarioMock)
+      ? (cenario as CenarioMock)
+      : ('completo' as const),
+    codigo,
+  }
+
+  apiAdaptacoes.obter(id, controller.signal, opcoes).then(
+    (dados) => {
+      if (!controller.signal.aborted) {
+        setResposta({ chave, dados })
+      }
+    },
+    (erro: unknown) => {
+      if (!controller.signal.aborted) {
+        setResposta({
+          chave,
+          erro:
+            erro instanceof ErroApi
+              ? erro
+              : new ErroApi('RESPOSTA_INVALIDA'),
+        })
+      }
+    },
+  )
+
+  return () => controller.abort()
+}, [id, chave, cenario, codigo, resultadoNavegacao])
 
   const atual = resposta?.chave === chave ? resposta : undefined
   const estado = !atual

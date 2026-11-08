@@ -56,6 +56,7 @@ export const textos = {
     CREDENCIAIS_INVALIDAS: 'E-mail ou senha incorretos.',
     RECURSO_NAO_ENCONTRADO: 'Não encontramos o conteúdo solicitado.',
     EMAIL_JA_CADASTRADO: 'Este e-mail já está cadastrado.',
+    DOCUMENTO_DUPLICADO: 'Este documento já foi enviado e processado anteriormente. Consulte seu histórico ou envie um documento diferente.',
     TESTE_NIVEL_INDISPONIVEL:
       'O Teste de Nível ainda não está disponível para você.',
     ARQUIVO_MUITO_GRANDE: 'O arquivo excede o limite de 10 MB.',
