@@ -23,7 +23,7 @@ export default function Layout() {
   return (
     <UsuarioProvider>
       <div className="app-shell">
-        <a className="app-skip" href="#conteudo">
+        <a className="app-skip" href="#conteudo-principal">
           {textos.navegacao.pularConteudo}
         </a>
 
@@ -41,7 +41,7 @@ export default function Layout() {
         <div className="app-main">
           <Header menuAberto={menuAberto} aoAbrirMenu={() => setMenuAberto(true)} />
 
-          <main className="app-content" id="conteudo" tabIndex={-1}>
+          <main className="app-content" id="conteudo-principal" tabIndex={-1}>
             <Outlet />
           </main>
         </div>
