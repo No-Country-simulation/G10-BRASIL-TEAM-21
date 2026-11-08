@@ -19,6 +19,7 @@ from ..schemas.documentos import (
     UploadDocumentoResponse,
 )
 from ..schemas.listagens import DocumentosListResponse
+from ..services import xp
 from ..services.ingestao import processar_documento
 from ._deps import get_current_user, get_db
 from ._errors import ErroApi, NaoImplementadoError
@@ -51,13 +52,16 @@ CORPO_DOCUMENTO = {
 }
 
 
+# A rota original que o front usa
 @router.post("/upload", response_model=UploadDocumentoResponse, status_code=201)
+# A rota que o edital pede (apontando para a mesma função)
+@router.post("", response_model=UploadDocumentoResponse, status_code=201)
 async def upload_documento(
     arquivo: UploadFile = File(...),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UploadDocumentoResponse:
-    """Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks."""
+    """Extrai e fatia PDF/TXT/MD; persiste os metadados e devolve os chunks."""
     nome = arquivo.filename or ""
     if not nome:
         raise ErroApi(400, "REQUISICAO_INVALIDA", "O arquivo precisa ter um nome.")
@@ -67,13 +71,15 @@ async def upload_documento(
     conteudo = await arquivo.read(limite_bytes + 1)
 
     if len(conteudo) > limite_bytes:
-        raise ErroApi(400, "ARQUIVO_MUITO_GRANDE", "O arquivo excede o limite de upload.")
+        raise ErroApi(413, "ARQUIVO_MUITO_GRANDE", "O arquivo excede o limite de upload.")
 
     try:
         # Chama o serviço para fazer o trabalho pesado
         doc, chunks = processar_documento(
             file=arquivo, conteudo=conteudo, db=db, usuario_id=str(current_user.usuario_id)
         )
+    except ErroApi:
+        raise  # ex.: 409 de documento duplicado; não pode virar 500 no except genérico
     except FormatoNaoSuportadoError as exc:
         raise ErroApi(400, "FORMATO_NAO_SUPORTADO", str(exc)) from exc
     except (PDFSyntaxError, UnicodeDecodeError, ValueError) as exc:
@@ -87,6 +93,10 @@ async def upload_documento(
 
     logger.info("Documento ingerido: id=%s | total chunks=%d", doc.documento_id, len(chunks))
 
+    # +10 XP só na primeira vez deste documento (reenvio do mesmo arquivo dá 409 antes daqui).
+    xp_ganho = xp.registrar_upload(db, current_user, doc.documento_id)
+    db.commit()
+
     # Monta a resposta usando os schemas
     return UploadDocumentoResponse(
         documento_id=str(doc.documento_id),
@@ -94,6 +104,7 @@ async def upload_documento(
         tamanho_bytes=doc.tamanho_bytes,
         data_upload=doc.criado_em,
         total_chunks=len(chunks),
+        xp_ganho=xp_ganho,
         chunks=[
             ChunkIngeridoResponse(chunk_id=c.chunk_id, ordem=c.ordem, texto=c.texto) for c in chunks
         ],

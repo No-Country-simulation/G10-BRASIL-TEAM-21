@@ -1,5 +1,10 @@
 """Serviço de adaptação (T11): recupera chunks, chama o agente e monta a resposta do contrato."""
 
+import hashlib
+from ..infra.db.models import Adaptacao, Chunk, Documento, Usuario
+from ..schemas.enums import DominioConhecimento, FormatoSaida, Nivel, StatusUpload
+from . import xp
+
 import uuid
 from typing import Any
 
@@ -84,7 +89,44 @@ def _selecionar_trechos(
         escolhidos = sorted((a.chunk for a in achados), key=lambda c: c.ordem)
     return doc.titulo, str(doc.documento_id), [(c.chunk_id, c.texto) for c in escolhidos], doc
 
+def _documento_do_texto(db: Session, usuario: Usuario, payload: AdaptacaoRequest) -> Documento:
+    """Texto enviado direto: guarda como Documento (sem chunks) para a adaptação ter origem.
 
+    A mesma pessoa enviando o mesmo texto reaproveita o documento (hash único por usuário).
+    """
+    conteudo = (payload.documento_conteudo or "").encode("utf-8")
+    hash_conteudo = hashlib.sha256(conteudo).hexdigest()
+    doc = db.scalars(
+        select(Documento).where(
+            Documento.usuario_id == usuario.usuario_id, Documento.hash_conteudo == hash_conteudo
+        )
+    ).first()
+    if doc is None:
+        doc = Documento(
+            usuario_id=usuario.usuario_id,
+            titulo=payload.documento_titulo or "Texto enviado",
+            formato_origem="texto",
+            hash_conteudo=hash_conteudo,
+            tamanho_bytes=len(conteudo),
+        )
+        db.add(doc)
+        db.flush()
+    return doc
+
+
+def _cache_key(doc: Documento, payload: AdaptacaoRequest) -> str:
+    """Identifica documento + parâmetros (RN-20). Por ora só é gravada; o cache vem depois."""
+    base = "|".join(
+        [
+            doc.hash_conteudo,
+            payload.perfil_destinatario.value,
+            payload.formato_saida.value,
+            payload.nicho_setor.value,
+            payload.nivel_detalhe.value,
+        ]
+    )
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()
+    
 def gerar_adaptacao(
     db: Session,
     usuario: Usuario,

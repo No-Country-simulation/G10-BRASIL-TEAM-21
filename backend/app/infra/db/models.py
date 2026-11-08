@@ -188,25 +188,55 @@ class EventoXP(Base):
     usuario_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("usuarios.usuario_id", ondelete="CASCADE"), nullable=False
     )
-    adaptacao_id: Mapped[uuid.UUID] = mapped_column(
+    # Eventos de quiz e geração apontam para a adaptação; o de upload aponta para o documento.
+    adaptacao_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("adaptacoes.adaptacao_id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+    documento_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("documentos.documento_id", ondelete="CASCADE"),
+        nullable=True,
     )
     tipo: Mapped[str] = mapped_column(String(30), nullable=False)
-    xp: Mapped[int] = mapped_column(Integer, nullable=False)
+    xp: Mapped[int] = mapped_column(Integer, nullable=False)  # negativo no erro de quiz
     item_indice: Mapped[int | None] = mapped_column(Integer, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        CheckConstraint("tipo IN ('geracao_conteudo','acerto_quiz')", name="ck_eventos_tipo"),
-        # XP uma vez por pergunta e adaptação
+        CheckConstraint(
+            "tipo IN ('upload_documento','geracao_conteudo','acerto_quiz','erro_quiz')",
+            name="ck_eventos_tipo",
+        ),
+        CheckConstraint(
+            "(tipo = 'upload_documento' AND documento_id IS NOT NULL) "
+            "OR (tipo <> 'upload_documento' AND adaptacao_id IS NOT NULL)",
+            name="ck_eventos_origem",
+        ),
+        # XP de acerto uma vez por pergunta e adaptação
         Index(
             "ux_eventos_acerto_quiz",
             "adaptacao_id",
             "item_indice",
             unique=True,
             postgresql_where=("tipo = 'acerto_quiz'"),
+        ),
+        # penalidade de erro também uma vez por pergunta e adaptação
+        Index(
+            "ux_eventos_erro_quiz",
+            "adaptacao_id",
+            "item_indice",
+            unique=True,
+            postgresql_where=("tipo = 'erro_quiz'"),
+        ),
+        # XP de upload só na primeira vez de cada documento do usuário
+        Index(
+            "ux_eventos_upload",
+            "usuario_id",
+            "documento_id",
+            unique=True,
+            postgresql_where=("tipo = 'upload_documento'"),
         ),
     )
 
