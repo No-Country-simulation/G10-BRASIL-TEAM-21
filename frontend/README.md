@@ -31,6 +31,28 @@ Para chamar o backend, altere `VITE_USE_MOCK=false` no `.env` e reinicie o Vite.
 
 As variáveis `VITE_*` são públicas e incorporadas ao build; nunca coloque segredos nelas. O cliente não substitui erros reais por mocks. Os controles/query strings de simulação não alteram as respostas HTTP.
 
+### Login de demonstração
+
+A tela de login disponibiliza um botão de acesso à conta de demonstração, facilitando a apresentação e a avaliação da plataforma.
+
+Para habilitar essa funcionalidade, configure as seguintes variáveis no arquivo `.env` do frontend:
+
+```env
+VITE_DEMO_ENABLED=true
+VITE_DEMO_EMAIL=email-da-conta-demo
+VITE_DEMO_PASSWORD=senha-da-conta-demo
+```
+
+- `VITE_DEMO_ENABLED`: habilita ou desabilita a exibição do botão de demonstração.
+- `VITE_DEMO_EMAIL`: e-mail da conta de demonstração.
+- `VITE_DEMO_PASSWORD`: senha correspondente à conta.
+
+**Importante:** a configuração dessas variáveis não cria o usuário automaticamente. A conta de demonstração precisa ser cadastrada previamente no backend, utilizando o fluxo de cadastro da aplicação ou outro procedimento de provisionamento disponibilizado pelo projeto.
+
+Após alterar as variáveis, reinicie o servidor do frontend para aplicar a configuração.
+
+**Segurança:** as variáveis com prefixo `VITE_` são incorporadas ao código disponibilizado no navegador. Portanto, utilize exclusivamente uma conta de demonstração, com dados fictícios e permissões limitadas. Nunca utilize credenciais administrativas ou de produção.
+
 O módulo `src/api/sessao.ts` fornece `definirTokenAcesso(token)` e `definirTokenAcesso(null)` ao futuro fluxo de autenticação. O cliente obtém o token em memória a cada requisição e acrescenta `Authorization: Bearer ...`; não usa `localStorage` nem registra tokens. Recarregar a página elimina a sessão volátil.
 
 Para testes isolados, `criarApiAdaptacoes(config, obterToken, transporte)` permite injetar token e transporte sem fazer rede.
