@@ -13,3 +13,5 @@ export type ItemConteudo = components['schemas']['ConteudoAdaptado']['itens'][nu
 export type LoginResponse =  components['schemas']['LoginResponse']
 export type CadastroRequest = components['schemas']['CadastroRequest']
 export type CadastroResponse = components['schemas']['CadastroResponse']
+export type Usuario = components['schemas']['UsuarioMeResponse']
+export type Perfil = components['schemas']['PerfilResponse']

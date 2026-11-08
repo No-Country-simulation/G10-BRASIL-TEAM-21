@@ -4,6 +4,14 @@ export const textos = {
   navegacao: {
     aria: 'Navegação principal',
     inicio: 'Início',
+    painel: 'Painel',
+    resultado: 'Resultado',
+    sair: 'Sair',
+    abrirMenu: 'Abrir menu',
+    fecharMenu: 'Fechar menu',
+    pularConteudo: 'Pular para o conteúdo',
+    espaco: 'Seu espaço',
+    breadcrumbRaiz: 'Seu espaço de aprendizado',
     upload: 'Novo conteúdo',
     historico: 'Histórico',
     perfil: 'Meu perfil',
@@ -114,6 +122,61 @@ export const textos = {
     vazioCadastro: 'O formulário de cadastro não está disponível.',
     wireframe:
       'Este formulário é uma prévia. A integração da autenticação será entregue no fluxo de acesso.',
+  },
+  painel: {
+    titulo: 'Painel',
+    saudacao: 'Bem-vindo de volta',
+    saudacaoSemNome: 'Bem-vindo de volta.',
+    subtitulo: 'Um bom lugar para continuar: o que você já entendeu e o que vem a seguir.',
+    novaAdaptacao: 'Nova adaptação',
+    inicioRapido: {
+      selo: 'Início rápido',
+      titulo: 'Uma fonte nova, um jeito melhor de aprender.',
+      descricao:
+        'Cole suas anotações ou traga um documento técnico. A gente cuida da adaptação.',
+      acao: 'Criar material de estudo',
+    },
+    formatos: {
+      titulo: 'Comece pelo formato',
+      descricoes: {
+        Tutorial: 'Aprenda em etapas',
+        Flashcards: 'Fixe os conceitos',
+        Quiz: 'Teste o que sabe',
+        Resumo: 'Vá ao essencial',
+        'Roteiro de Aula': 'Ensine com clareza',
+      },
+    },
+    recentes: {
+      titulo: 'Retome de onde parou',
+      verTodas: 'Ver todas',
+      vazioTitulo: 'Nenhuma adaptação por aqui ainda',
+      vazioDescricao:
+        'Quando você gerar seu primeiro material, ele aparece aqui para você retomar a qualquer momento.',
+      vazioAcao: 'Criar primeira adaptação',
+      exemploTitulo: 'Flashcards: exemplo de demonstração',
+      exemploMeta: 'Flashcards · Exemplo',
+    },
+    progresso: {
+      titulo: 'Seu progresso',
+      nivel: 'Nível',
+      proximoMarco: 'Próximo marco',
+      restantes: 'XP restantes',
+      indisponivel:
+        'O acompanhamento de XP aparece aqui assim que estiver disponível para a sua conta.',
+      verTrilha: 'Ver meu perfil',
+    },
+    teste: {
+      selo: 'Uma sugestão, não uma regra',
+      titulo: 'Seu teste de nível está disponível.',
+      descricao: 'Reconheça o que você já domina. Sem pressão e sem bloqueios.',
+      acao: 'Fazer o teste',
+    },
+    perfilAtual: {
+      titulo: 'Seu perfil atual',
+      descricao:
+        'O material técnico é explicado no seu nível, sem perder a precisão.',
+      acao: 'Ver perfil',
+    },
   },
   upload: {
     titulo: 'Novo conteúdo',

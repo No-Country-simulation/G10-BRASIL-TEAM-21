@@ -39,4 +39,8 @@ export const apiAutenticacao = {
       }),
     )
   },
+
+  async logout(): Promise<void> {
+    await requisitar<void>('auth/logout', { method: 'POST' })
+  },
 }

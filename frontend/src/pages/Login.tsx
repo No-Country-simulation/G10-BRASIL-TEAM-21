@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { apiAutenticacao } from '../api/autenticacao'
-import { definirTokenAcesso } from '../api/sessao'
+import { definirTokenAcesso, obterTokenAcesso } from '../api/sessao'
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { textos } from '../texts/pt-BR'
 import { configuracaoDemo } from '../config/demo'
@@ -28,6 +28,11 @@ export default function Login() {
     document.title = 'Entrar | AdaptAI'
   }, [])
 
+  /* Quem já está logado vai direto para o painel */
+  if (obterTokenAcesso()) {
+    return <Navigate to="/painel" replace />
+  }
+
   async function realizarLogin(emailLogin: string, senhaLogin: string) {
     setErro('')
     setCarregando(true)
@@ -40,7 +45,7 @@ export default function Login() {
 
       definirTokenAcesso(resposta.access_token)
 
-      navigate('/upload', { replace: true })
+      navigate('/painel', { replace: true })
     } catch (error) {
       setErro(
         error instanceof Error
