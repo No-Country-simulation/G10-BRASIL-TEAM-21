@@ -7,11 +7,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Table, create_engine
 from sqlalchemy.orm import sessionmaker
 
-# FORÇA as variáveis de ambiente antes do app ser importado
-os.environ["DATABASE_URL"] = "sqlite:///./test_auth.db"
-os.environ["JWT_SECRET"] = "chave-super-secreta-de-teste"
-os.environ["JWT_EXPIRA_MIN"] = "60"
-
 from app.api._deps import get_current_user
 from app.core.security import criar_token_jwt, decodificar_token, hash_senha, verificar_senha
 from app.infra.db.models import Base, Usuario
@@ -34,9 +29,6 @@ def override_get_db():
         yield db
     finally:
         db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
 
 
 # Apaga o arquivo do banco após rodar todos os testes
@@ -89,6 +81,8 @@ def limpar_banco():
 
 
 def test_fluxo_completo_de_auth():
+    app.dependency_overrides[get_db] = override_get_db
+
     # Instancia o client DENTRO do teste para evitar vazamento de threads
     with TestClient(app) as client:
         # 1. Cadastro

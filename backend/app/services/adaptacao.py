@@ -148,7 +148,11 @@ def _resposta_do_cache(
 ) -> AdaptacaoResponse:
     """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
     resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
-        update={"request_id": request_id, "cache_hit": True}
+        update={
+            "request_id": request_id,
+            "cache_hit": True,
+            "adaptacao_id": str(adaptacao.adaptacao_id),
+        }
     )
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
@@ -210,6 +214,7 @@ def gerar_adaptacao(
     ancoragem = round(com_fonte / len(saida.itens), 3)
 
     resposta = AdaptacaoResponse(
+        adaptacao_id="pendente",
         request_id=request_id,
         metadados=Metadados(
             perfil_aplicado=payload.perfil_destinatario,
@@ -270,10 +275,13 @@ def gerar_adaptacao(
         )
         db.add(adaptacao_existente)
         db.flush()  # Garante que a adaptacao_id exista antes de dar o XP
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
+        adaptacao_existente.resultado = resposta.model_dump(mode="json")
 
         # AQUI DÁ O XP DA T13! (+5 XP)
         xp_ganho = xp.registrar_geracao(db, usuario, adaptacao_existente.adaptacao_id)
     else:
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
         adaptacao_existente.resultado = resposta.model_dump(mode="json")
         adaptacao_existente.ancoragem_fonte_score = ancoragem
         adaptacao_existente.status_upload = "concluido"
