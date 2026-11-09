@@ -85,12 +85,15 @@ def api(db_session, usuario, monkeypatch):
     return TestClient(app), monkeypatch
 
 
-def _gerar(api, formato="Quiz", variante=0, **extra):
+def _gerar(api, formato="Quiz", variante=None, **extra):
     """Gera uma adaptação. `variante` muda o texto do documento: o T12 tem cache, e a mesma
-    requisição repetida devolve a adaptação já salva (sem XP novo)."""
+    requisição repetida devolve a adaptação já salva (sem XP novo). Por padrão, cada chamada
+    usa conteúdo único para não depender de cache persistido por outra execução do CI."""
     cliente, mp = api
     texto = _quiz_json() if formato == "Quiz" else _flash_json()
     mp.setattr("app.api.adaptacoes.criar_cadeia", lambda settings: [LLMFalso(texto)])
+    if variante is None:
+        variante = uuid.uuid4().hex
     corpo = {
         **BASE,
         "documento_conteudo": BASE["documento_conteudo"] + f" Variante {variante}.",
@@ -157,8 +160,8 @@ def test_teto_diario_quando_configurado(api, db_session, usuario, monkeypatch):
 
 
 def test_cache_hit_devolve_o_mesmo_id_e_nao_da_xp(api, db_session, usuario):
-    primeira = _gerar(api).json()
-    segunda = _gerar(api).json()  # mesma requisição: vem do cache do T12
+    primeira = _gerar(api, variante="cache-hit").json()
+    segunda = _gerar(api, variante="cache-hit").json()  # mesma requisição: cache do T12
     assert segunda["cache_hit"] is True
     assert segunda["adaptacao_id"] == primeira["adaptacao_id"]
     assert segunda["trilha_evolucao"]["xp_ganho_nesta_sessao"] == 0
@@ -168,8 +171,12 @@ def test_cache_hit_devolve_o_mesmo_id_e_nao_da_xp(api, db_session, usuario):
 
 
 def test_reprocessar_mantem_o_id_e_nao_da_xp(api, db_session, usuario):
-    primeira = _gerar(api).json()
-    de_novo = _gerar(api, params={"forcar_reprocessamento": "true"}).json()
+    primeira = _gerar(api, variante="reprocessamento").json()
+    de_novo = _gerar(
+        api,
+        variante="reprocessamento",
+        params={"forcar_reprocessamento": "true"},
+    ).json()
     assert de_novo["cache_hit"] is False
     assert de_novo["adaptacao_id"] == primeira["adaptacao_id"]
     assert de_novo["trilha_evolucao"]["xp_ganho_nesta_sessao"] == 0
