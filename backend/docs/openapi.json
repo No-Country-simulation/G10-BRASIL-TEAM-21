@@ -674,15 +674,15 @@
               }
             }
           },
-          "501": {
+          "404": {
+            "description": "Adaptação não encontrada ou não pertence ao usuário autenticado.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroResposta"
                 }
               }
-            },
-            "description": "Not Implemented"
+            }
           },
           "422": {
             "description": "Validation Error",

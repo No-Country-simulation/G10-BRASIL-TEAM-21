@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, select
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..infra import criar_cadeia
 from ..infra.db.models import Adaptacao, Documento, Usuario
-from ..schemas.adaptacao import AdaptacaoRequest, AdaptacaoResponse
+from ..schemas.adaptacao import AdaptacaoRequest, AdaptacaoResponse, ocultar_gabarito
 from ..schemas.common import ErroResposta
 from ..schemas.listagens import AdaptacaoResumo, AdaptacoesListResponse
 from ..schemas.perfil import RespostasQuizRequest, RespostasQuizResponse
@@ -109,13 +110,32 @@ async def listar_adaptacoes(
     )
 
 
-@router.get("/{adaptacao_id}", response_model=AdaptacaoResponse, responses=ERR)
+@router.get(
+    "/{adaptacao_id}",
+    response_model=AdaptacaoResponse,
+    responses={404: {"model": ErroResposta}},
+)
 async def obter_adaptacao(
-    adaptacao_id: str,
+    adaptacao_id: UUID,
+    request: Request,
     incluir_gabarito: bool = Query(False),
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> AdaptacaoResponse:
-    raise NaoImplementadoError()
+    """Retorna uma adaptação salva pertencente ao usuário autenticado."""
+    adaptacao = db.scalars(
+        select(Adaptacao).where(
+            Adaptacao.adaptacao_id == adaptacao_id,
+            Adaptacao.usuario_id == current_user.usuario_id,
+        )
+    ).first()
+    if adaptacao is None:
+        raise ErroApi(404, "RECURSO_NAO_ENCONTRADO", "Adaptação não encontrada.")
+
+    resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
+        update={"request_id": getattr(request.state, "request_id", "req-desconhecido")}
+    )
+    return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
 
 @router.post(
