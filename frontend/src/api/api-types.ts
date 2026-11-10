@@ -304,6 +304,8 @@ export interface components {
         };
         /** AdaptacaoResponse */
         AdaptacaoResponse: {
+            /** Adaptacao Id */
+            adaptacao_id: string;
             /**
              * Status
              * @default sucesso
@@ -867,6 +869,10 @@ export interface components {
             acertos: number;
             /** Total */
             total: number;
+            /** Percentual Acerto */
+            percentual_acerto: number;
+            /** Itens Errados */
+            itens_errados: number[];
             /** Xp Ganho */
             xp_ganho: number;
             /** Feedback */

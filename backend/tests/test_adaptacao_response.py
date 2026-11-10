@@ -114,6 +114,7 @@ def test_flashcard_com_item_quiz_falha():
                 itens=[item_errado],
             ),
             avaliacao_qualidade=_avaliacao(),
+            armazenamento_oci=_armazenamento(),
         )
 
 

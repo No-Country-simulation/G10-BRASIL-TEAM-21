@@ -912,6 +912,10 @@
       },
       "AdaptacaoResponse": {
         "properties": {
+          "adaptacao_id": {
+            "type": "string",
+            "title": "Adaptacao Id"
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -982,6 +986,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "adaptacao_id",
           "request_id",
           "metadados",
           "conteudo_adaptado",
@@ -2477,6 +2482,17 @@
             "type": "integer",
             "title": "Total"
           },
+          "percentual_acerto": {
+            "type": "number",
+            "title": "Percentual Acerto"
+          },
+          "itens_errados": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Itens Errados"
+          },
           "xp_ganho": {
             "type": "integer",
             "title": "Xp Ganho"
@@ -2497,6 +2513,8 @@
         "required": [
           "acertos",
           "total",
+          "percentual_acerto",
+          "itens_errados",
           "xp_ganho",
           "feedback",
           "trilha_evolucao"
