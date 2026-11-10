@@ -193,153 +193,6 @@
         ]
       }
     },
-    "/api/v1/documentos": {
-      "post": {
-        "tags": [
-          "documentos"
-        ],
-        "summary": "Criar Documento",
-        "operationId": "criar_documento_api_v1_documentos_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentoResponse"
-                }
-              }
-            }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "arquivo": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "PDF, Markdown ou TXT."
-                  }
-                },
-                "required": [
-                  "arquivo"
-                ]
-              }
-            },
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "description": "Entrada JSON para texto bruto (alternativa ao multipart).",
-                "properties": {
-                  "titulo": {
-                    "title": "Titulo",
-                    "type": "string"
-                  },
-                  "conteudo": {
-                    "title": "Conteudo",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "titulo",
-                  "conteudo"
-                ],
-                "title": "DocumentoCreateTexto",
-                "type": "object"
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "documentos"
-        ],
-        "summary": "Listar Documentos",
-        "operationId": "listar_documentos_api_v1_documentos_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limite",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limite"
-            }
-          },
-          {
-            "name": "deslocamento",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Deslocamento"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentosListResponse"
-                }
-              }
-            }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/documentos/upload": {
       "post": {
         "tags": [
@@ -434,6 +287,67 @@
         ]
       }
     },
+    "/api/v1/documentos": {
+      "get": {
+        "tags": [
+          "documentos"
+        ],
+        "summary": "Listar Documentos",
+        "operationId": "listar_documentos_api_v1_documentos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "deslocamento",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Deslocamento"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentosListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documentos/{documento_id}": {
       "get": {
         "tags": [
@@ -467,16 +381,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
           },
           "422": {
             "description": "Validation Error",
@@ -547,7 +451,7 @@
               }
             }
           },
-          "501": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -555,7 +459,17 @@
                 }
               }
             },
-            "description": "Not Implemented"
+            "description": "Bad Request"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           },
           "422": {
             "description": "Validation Error",
@@ -674,7 +588,7 @@
               }
             }
           },
-          "501": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -682,7 +596,17 @@
                 }
               }
             },
-            "description": "Not Implemented"
+            "description": "Bad Request"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           },
           "422": {
             "description": "Validation Error",
@@ -792,16 +716,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -825,16 +739,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TesteNivelResponse"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
                 }
               }
             }
@@ -890,16 +794,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
           },
           "422": {
             "description": "Validation Error",
@@ -1018,6 +912,10 @@
       },
       "AdaptacaoResponse": {
         "properties": {
+          "adaptacao_id": {
+            "type": "string",
+            "title": "Adaptacao Id"
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -1088,6 +986,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "adaptacao_id",
           "request_id",
           "metadados",
           "conteudo_adaptado",
@@ -1369,20 +1268,6 @@
           "objetivo"
         ],
         "title": "BlocoMicrolearning"
-      },
-      "Body_upload_documento_api_v1_documentos_post": {
-        "properties": {
-          "arquivo": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "Arquivo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "arquivo"
-        ],
-        "title": "Body_upload_documento_api_v1_documentos_post"
       },
       "Body_upload_documento_api_v1_documentos_upload_post": {
         "properties": {
@@ -2597,6 +2482,17 @@
             "type": "integer",
             "title": "Total"
           },
+          "percentual_acerto": {
+            "type": "number",
+            "title": "Percentual Acerto"
+          },
+          "itens_errados": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Itens Errados"
+          },
           "xp_ganho": {
             "type": "integer",
             "title": "Xp Ganho"
@@ -2617,6 +2513,8 @@
         "required": [
           "acertos",
           "total",
+          "percentual_acerto",
+          "itens_errados",
           "xp_ganho",
           "feedback",
           "trilha_evolucao"

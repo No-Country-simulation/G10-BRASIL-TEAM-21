@@ -58,6 +58,7 @@ def _armazenamento() -> ArmazenamentoOCI:
 
 def _resposta(**extra):
     return AdaptacaoResponse(
+        adaptacao_id="123e4567-e89b-12d3-a456-426614174000",
         request_id="r1",
         metadados=_metadados(FormatoSaida.FLASHCARDS),
         conteudo_adaptado=ConteudoAdaptado(titulo="T", introducao_contextualizada="i", itens=[]),
@@ -75,6 +76,7 @@ def test_flashcard_com_item_flashcard_ok():
         fontes_chunks=["chunk-001"],
     )
     resp = AdaptacaoResponse(
+        adaptacao_id="123e4567-e89b-12d3-a456-426614174000",
         request_id="r1",
         metadados=_metadados(FormatoSaida.FLASHCARDS),
         conteudo_adaptado=ConteudoAdaptado(
@@ -103,6 +105,7 @@ def test_flashcard_com_item_quiz_falha():
     )
     with pytest.raises(ValidationError):
         AdaptacaoResponse(
+            adaptacao_id="123e4567-e89b-12d3-a456-426614174000",
             request_id="r1",
             metadados=_metadados(FormatoSaida.FLASHCARDS),
             conteudo_adaptado=ConteudoAdaptado(
@@ -111,6 +114,7 @@ def test_flashcard_com_item_quiz_falha():
                 itens=[item_errado],
             ),
             avaliacao_qualidade=_avaliacao(),
+            armazenamento_oci=_armazenamento(),
         )
 
 
@@ -135,6 +139,7 @@ def test_quiz_resposta_correta_precisa_existir():
 
 def test_ocultar_gabarito_remove_resposta_e_justificativa():
     resp = AdaptacaoResponse(
+        adaptacao_id="123e4567-e89b-12d3-a456-426614174000",
         request_id="r1",
         metadados=_metadados(FormatoSaida.QUIZ),
         conteudo_adaptado=ConteudoAdaptado(

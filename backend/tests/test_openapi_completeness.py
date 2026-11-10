@@ -26,7 +26,8 @@ def test_todas_as_rotas_da_secao_2_presentes():
         "/api/v1/auth/login": {"post"},
         "/api/v1/auth/logout": {"post"},
         "/api/v1/usuarios/me": {"get"},
-        "/api/v1/documentos": {"post", "get"},
+        "/api/v1/documentos": {"get"},
+        "/api/v1/documentos/upload": {"post"},
         "/api/v1/documentos/{documento_id}": {"get"},
         "/api/v1/adaptacoes": {"post", "get"},
         "/api/v1/adaptacoes/{adaptacao_id}": {"get"},
@@ -49,13 +50,15 @@ def test_schemas_chave_estao_no_openapi():
         assert nome in schemas, f"Schema {nome} ausente"
 
 
-def test_post_documentos_documenta_o_corpo():
+def test_post_documentos_upload_documenta_multipart():
     spec = client.get("/openapi.json").json()
-    corpo = spec["paths"]["/api/v1/documentos"]["post"]["requestBody"]
+    corpo = spec["paths"]["/api/v1/documentos/upload"]["post"]["requestBody"]
     assert corpo["required"] is True
-    assert set(corpo["content"]) == {"multipart/form-data", "application/json"}
-    json_schema = corpo["content"]["application/json"]["schema"]
-    assert set(json_schema["required"]) == {"titulo", "conteudo"}
+    assert set(corpo["content"]) == {"multipart/form-data"}
+    schema_ref = corpo["content"]["multipart/form-data"]["schema"]["$ref"]
+    schema_name = schema_ref.rsplit("/", maxsplit=1)[-1]
+    upload_schema = spec["components"]["schemas"][schema_name]
+    assert set(upload_schema["required"]) == {"arquivo"}
 
 
 def test_openapi_commitado_esta_atualizado():

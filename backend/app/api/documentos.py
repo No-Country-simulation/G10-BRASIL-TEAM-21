@@ -1,61 +1,35 @@
 import logging
-from typing import Any
+import uuid
 
-from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from pdfminer.pdfparser import PDFSyntaxError
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..infra.db.models import Usuario
+from ..infra.db.models import Chunk, Documento, Usuario
 from ..rag.embeddings import ErroEmbedding
 from ..rag.extractor import FormatoNaoSuportadoError
 from ..rag.retrieval import buscar_chunks_similares
 from ..schemas.busca import BuscaChunksRequest, BuscaChunksResponse, ChunkBuscaResponse
-from ..schemas.common import ErroResposta
 from ..schemas.documentos import (
     ChunkIngeridoResponse,
-    DocumentoCreateTexto,
     DocumentoResponse,
+    DocumentoResumo,
     UploadDocumentoResponse,
 )
+from ..schemas.enums import ClassificadorUsado, DominioConhecimento, Nivel, StatusUpload
 from ..schemas.listagens import DocumentosListResponse
 from ..services import xp
 from ..services.ingestao import processar_documento
 from ._deps import get_current_user, get_db
-from ._errors import ErroApi, NaoImplementadoError
+from ._errors import ErroApi
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 logger = logging.getLogger(__name__)
 
-ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
-CORPO_DOCUMENTO = {
-    "requestBody": {
-        "required": True,
-        "content": {
-            "multipart/form-data": {
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "arquivo": {
-                            "type": "string",
-                            "format": "binary",
-                            "description": "PDF, Markdown ou TXT.",
-                        }
-                    },
-                    "required": ["arquivo"],
-                }
-            },
-            "application/json": {"schema": DocumentoCreateTexto.model_json_schema()},
-        },
-    }
-}
-
-
-# A rota original que o front usa
 @router.post("/upload", response_model=UploadDocumentoResponse, status_code=201)
-# A rota que o edital pede (apontando para a mesma função)
-@router.post("", response_model=UploadDocumentoResponse, status_code=201)
 async def upload_documento(
     arquivo: UploadFile = File(...),
     current_user: Usuario = Depends(get_current_user),
@@ -144,32 +118,101 @@ def buscar_documentos(
     )
 
 
-@router.post(
-    "",
-    response_model=DocumentoResponse,
-    status_code=201,
-    responses=ERR,
-    openapi_extra=CORPO_DOCUMENTO,
-)
-async def criar_documento(
-    request: Request,
-    current_user: Usuario = Depends(get_current_user),
-) -> DocumentoResponse:
-    raise NaoImplementadoError()
-
-
-@router.get("", response_model=DocumentosListResponse, responses=ERR)
-async def listar_documentos(
+@router.get("", response_model=DocumentosListResponse)
+def listar_documentos(
     limite: int = Query(20, ge=1, le=100),
     deslocamento: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> DocumentosListResponse:
-    raise NaoImplementadoError()
+    filtro_usuario = Documento.usuario_id == current_user.usuario_id
+    total = db.scalar(select(func.count()).select_from(Documento).where(filtro_usuario)) or 0
+    documentos = db.scalars(
+        select(Documento)
+        .where(filtro_usuario)
+        .order_by(Documento.criado_em.desc(), Documento.documento_id.desc())
+        .limit(limite)
+        .offset(deslocamento)
+    ).all()
+
+    return DocumentosListResponse(
+        itens=[
+            DocumentoResumo(
+                documento_id=str(doc.documento_id),
+                titulo=doc.titulo,
+                formato_origem=doc.formato_origem,
+                nivel_documento_estimado=(
+                    Nivel(doc.nivel_documento_estimado)
+                    if doc.nivel_documento_estimado is not None
+                    else None
+                ),
+                dominio_conhecimento=(
+                    DominioConhecimento(doc.dominio_conhecimento)
+                    if doc.dominio_conhecimento is not None
+                    else None
+                ),
+                classificador_usado=(
+                    ClassificadorUsado(doc.classificador_usado)
+                    if doc.classificador_usado is not None
+                    else None
+                ),
+                status_upload=StatusUpload(doc.status_upload),
+                criado_em=doc.criado_em,
+            )
+            for doc in documentos
+        ],
+        total=total,
+    )
 
 
-@router.get("/{documento_id}", response_model=DocumentoResponse, responses=ERR)
-async def obter_documento(
+@router.get("/{documento_id}", response_model=DocumentoResponse)
+def obter_documento(
     documento_id: str,
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> DocumentoResponse:
-    raise NaoImplementadoError()
+    try:
+        documento_uuid = uuid.UUID(documento_id)
+    except ValueError:
+        raise ErroApi(400, "REQUISICAO_INVALIDA", "documento_id inválido.") from None
+
+    documento = db.scalars(
+        select(Documento).where(
+            Documento.documento_id == documento_uuid,
+            Documento.usuario_id == current_user.usuario_id,
+        )
+    ).first()
+    if documento is None:
+        raise ErroApi(404, "RECURSO_NAO_ENCONTRADO", "Documento não encontrado.")
+
+    chunks_indexados = (
+        db.scalar(
+            select(func.count())
+            .select_from(Chunk)
+            .where(Chunk.documento_id == documento.documento_id)
+        )
+        or 0
+    )
+
+    return DocumentoResponse(
+        documento_id=str(documento.documento_id),
+        titulo=documento.titulo,
+        formato_origem=documento.formato_origem,
+        chunks_indexados=chunks_indexados,
+        nivel_documento_estimado=(
+            Nivel(documento.nivel_documento_estimado)
+            if documento.nivel_documento_estimado is not None
+            else None
+        ),
+        dominio_conhecimento=(
+            DominioConhecimento(documento.dominio_conhecimento)
+            if documento.dominio_conhecimento is not None
+            else None
+        ),
+        classificador_usado=(
+            ClassificadorUsado(documento.classificador_usado)
+            if documento.classificador_usado is not None
+            else None
+        ),
+        status_upload=StatusUpload(documento.status_upload),
+    )
