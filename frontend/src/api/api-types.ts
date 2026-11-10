@@ -177,7 +177,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Obter Adaptacao */
+        /**
+         * Obter Adaptacao
+         * @description Retorna uma adaptação salva pertencente ao usuário autenticado.
+         */
         get: operations["obter_adaptacao_api_v1_adaptacoes__adaptacao_id__get"];
         put?: never;
         post?: never;
@@ -1406,6 +1409,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErroResposta"];
                 };
             };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1413,15 +1425,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Bad Gateway */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1459,15 +1462,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErroResposta"];
                 };
             };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1475,6 +1469,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };

@@ -550,6 +550,7 @@
           "adaptacoes"
         ],
         "summary": "Obter Adaptacao",
+        "description": "Retorna uma adaptação salva pertencente ao usuário autenticado.",
         "operationId": "obter_adaptacao_api_v1_adaptacoes__adaptacao_id__get",
         "security": [
           {
@@ -598,7 +599,7 @@
             },
             "description": "Bad Request"
           },
-          "502": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -606,7 +607,7 @@
                 }
               }
             },
-            "description": "Bad Gateway"
+            "description": "Not Found"
           },
           "422": {
             "description": "Validation Error",
@@ -676,7 +677,7 @@
             },
             "description": "Bad Request"
           },
-          "404": {
+          "502": {
             "content": {
               "application/json": {
                 "schema": {
@@ -684,7 +685,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Bad Gateway"
           },
           "422": {
             "description": "Validation Error",
