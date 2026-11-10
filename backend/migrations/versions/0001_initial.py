@@ -102,7 +102,7 @@ def upgrade() -> None:
             sa.ForeignKey("documentos.documento_id", ondelete="CASCADE"),
             primary_key=True,
         ),
-        sa.Column("chunk_id", sa.String(50), primary_key=True),
+        sa.Column("chunk_id", sa.String(64), primary_key=True),
         sa.Column("ordem", sa.Integer, nullable=False),
         sa.Column("texto", sa.Text, nullable=False),
     )
