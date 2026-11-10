@@ -157,6 +157,7 @@ Parâmetros de consulta: `?incluir_gabarito=true` e `?forcar_reprocessamento=tru
 `cache_hit` é `true` quando a resposta reutiliza uma adaptação existente para o mesmo hash de conteúdo e parâmetros; em uma geração nova, é `false`. `?forcar_reprocessamento=true` solicita uma nova geração mesmo quando há resultado em cache.
 ```json
 {
+  "adaptacao_id": "123e4567-e89b-12d3-a456-426614174000",
   "status": "sucesso",
   "versao_schema": "1.0",
   "request_id": "req-20261017-0001",
