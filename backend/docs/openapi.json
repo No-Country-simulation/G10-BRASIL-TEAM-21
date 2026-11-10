@@ -199,7 +199,7 @@
           "documentos"
         ],
         "summary": "Upload Documento",
-        "description": "Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks.",
+        "description": "Extrai e fatia PDF/TXT/MD; persiste os metadados e devolve os chunks.",
         "operationId": "upload_documento_api_v1_documentos_upload_post",
         "requestBody": {
           "content": {
@@ -288,82 +288,6 @@
       }
     },
     "/api/v1/documentos": {
-      "post": {
-        "tags": [
-          "documentos"
-        ],
-        "summary": "Criar Documento",
-        "operationId": "criar_documento_api_v1_documentos_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentoResponse"
-                }
-              }
-            }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "arquivo": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "PDF, Markdown ou TXT."
-                  }
-                },
-                "required": [
-                  "arquivo"
-                ]
-              }
-            },
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "description": "Entrada JSON para texto bruto (alternativa ao multipart).",
-                "properties": {
-                  "titulo": {
-                    "title": "Titulo",
-                    "type": "string"
-                  },
-                  "conteudo": {
-                    "title": "Conteudo",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "titulo",
-                  "conteudo"
-                ],
-                "title": "DocumentoCreateTexto",
-                "type": "object"
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "documentos"
@@ -411,16 +335,6 @@
               }
             }
           },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
-          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -467,16 +381,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
           },
           "422": {
             "description": "Validation Error",
@@ -547,7 +451,7 @@
               }
             }
           },
-          "501": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -555,7 +459,17 @@
                 }
               }
             },
-            "description": "Not Implemented"
+            "description": "Bad Request"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           },
           "422": {
             "description": "Validation Error",
@@ -636,6 +550,7 @@
           "adaptacoes"
         ],
         "summary": "Obter Adaptacao",
+        "description": "Retorna uma adaptação salva pertencente ao usuário autenticado.",
         "operationId": "obter_adaptacao_api_v1_adaptacoes__adaptacao_id__get",
         "security": [
           {
@@ -674,15 +589,25 @@
               }
             }
           },
-          "404": {
-            "description": "Adaptação não encontrada ou não pertence ao usuário autenticado.",
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroResposta"
                 }
               }
-            }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "422": {
             "description": "Validation Error",
@@ -703,6 +628,7 @@
           "adaptacoes"
         ],
         "summary": "Responder Quiz",
+        "description": "Corrige o quiz com o gabarito salvo, devolve a nota e concede XP (T13.1 e T13.2).",
         "operationId": "responder_quiz_api_v1_adaptacoes__adaptacao_id__respostas_post",
         "security": [
           {
@@ -741,7 +667,7 @@
               }
             }
           },
-          "501": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -749,7 +675,17 @@
                 }
               }
             },
-            "description": "Not Implemented"
+            "description": "Bad Request"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroResposta"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           },
           "422": {
             "description": "Validation Error",
@@ -781,16 +717,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -814,16 +740,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TesteNivelResponse"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not Implemented",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
                 }
               }
             }
@@ -879,16 +795,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErroResposta"
-                }
-              }
-            },
-            "description": "Not Implemented"
           },
           "422": {
             "description": "Validation Error",
@@ -1007,6 +913,10 @@
       },
       "AdaptacaoResponse": {
         "properties": {
+          "adaptacao_id": {
+            "type": "string",
+            "title": "Adaptacao Id"
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -1077,6 +987,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "adaptacao_id",
           "request_id",
           "metadados",
           "conteudo_adaptado",
@@ -2572,6 +2483,17 @@
             "type": "integer",
             "title": "Total"
           },
+          "percentual_acerto": {
+            "type": "number",
+            "title": "Percentual Acerto"
+          },
+          "itens_errados": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Itens Errados"
+          },
           "xp_ganho": {
             "type": "integer",
             "title": "Xp Ganho"
@@ -2592,6 +2514,8 @@
         "required": [
           "acertos",
           "total",
+          "percentual_acerto",
+          "itens_errados",
           "xp_ganho",
           "feedback",
           "trilha_evolucao"
@@ -2819,6 +2743,11 @@
           "total_chunks": {
             "type": "integer",
             "title": "Total Chunks"
+          },
+          "xp_ganho": {
+            "type": "integer",
+            "title": "Xp Ganho",
+            "default": 0
           },
           "chunks": {
             "items": {

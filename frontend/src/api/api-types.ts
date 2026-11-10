@@ -83,7 +83,7 @@ export interface paths {
         put?: never;
         /**
          * Upload Documento
-         * @description Extrai e fatia PDF/TXT; persiste os metadados e devolve os chunks.
+         * @description Extrai e fatia PDF/TXT/MD; persiste os metadados e devolve os chunks.
          */
         post: operations["upload_documento_api_v1_documentos_upload_post"];
         delete?: never;
@@ -122,8 +122,7 @@ export interface paths {
         /** Listar Documentos */
         get: operations["listar_documentos_api_v1_documentos_get"];
         put?: never;
-        /** Criar Documento */
-        post: operations["criar_documento_api_v1_documentos_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -154,7 +153,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Listar Adaptacoes */
+        /**
+         * Listar Adaptacoes
+         * @description Lista as adaptações do usuário, das mais recentes para as mais antigas.
+         */
         get: operations["listar_adaptacoes_api_v1_adaptacoes_get"];
         put?: never;
         /**
@@ -194,7 +196,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Responder Quiz */
+        /**
+         * Responder Quiz
+         * @description Corrige o quiz com o gabarito salvo, devolve a nota e concede XP (T13.1 e T13.2).
+         */
         post: operations["responder_quiz_api_v1_adaptacoes__adaptacao_id__respostas_post"];
         delete?: never;
         options?: never;
@@ -299,6 +304,8 @@ export interface components {
         };
         /** AdaptacaoResponse */
         AdaptacaoResponse: {
+            /** Adaptacao Id */
+            adaptacao_id: string;
             /**
              * Status
              * @default sucesso
@@ -862,6 +869,10 @@ export interface components {
             acertos: number;
             /** Total */
             total: number;
+            /** Percentual Acerto */
+            percentual_acerto: number;
+            /** Itens Errados */
+            itens_errados: number[];
             /** Xp Ganho */
             xp_ganho: number;
             /** Feedback */
@@ -951,6 +962,11 @@ export interface components {
             data_upload: string;
             /** Total Chunks */
             total_chunks: number;
+            /**
+             * Xp Ganho
+             * @default 0
+             */
+            xp_ganho: number;
             /** Chunks */
             chunks: components["schemas"]["ChunkIngeridoResponse"][];
         };
@@ -1240,60 +1256,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
-        };
-    };
-    criar_documento_api_v1_documentos_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /**
-                     * Format: binary
-                     * @description PDF, Markdown ou TXT.
-                     */
-                    arquivo: string;
-                };
-                "application/json": {
-                    /** Titulo */
-                    titulo: string;
-                    /** Conteudo */
-                    conteudo: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentoResponse"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
         };
     };
     obter_documento_api_v1_documentos__documento_id__get: {
@@ -1323,15 +1285,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1366,15 +1319,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
         };
     };
     criar_adaptacao_api_v1_adaptacoes_post: {
@@ -1402,6 +1346,15 @@ export interface operations {
                     "application/json": components["schemas"]["AdaptacaoResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1411,8 +1364,8 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1444,6 +1397,15 @@ export interface operations {
                     "application/json": components["schemas"]["AdaptacaoResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1453,8 +1415,8 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1488,6 +1450,24 @@ export interface operations {
                     "application/json": components["schemas"]["RespostasQuizResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1495,15 +1475,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1526,15 +1497,6 @@ export interface operations {
                     "application/json": components["schemas"]["PerfilResponse"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
         };
     };
     iniciar_teste_api_v1_testes_nivel_post: {
@@ -1553,15 +1515,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TesteNivelResponse"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1597,15 +1550,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };

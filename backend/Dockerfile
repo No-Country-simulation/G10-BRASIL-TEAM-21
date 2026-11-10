@@ -12,7 +12,10 @@ RUN pip install .
 
 COPY app ./app
 
-# ADICIONE ESTAS DUAS LINHAS AQUI:
+# ADICIONE ESTAS LINHAS:
+COPY scripts ./scripts
+COPY docs ./docs
+
 COPY alembic.ini ./
 COPY migrations ./migrations
 

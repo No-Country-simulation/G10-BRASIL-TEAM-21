@@ -1,9 +1,14 @@
 """Provedor reserva: Groq (llama-3.1-8b-instant ou openai/gpt-oss-20b), modo JSON."""
 
+import logging
+
 import groq as groq_sdk
 from pydantic import BaseModel
 
 from ...ports.llm import LLMConfigError, LLMIndisponivelError
+
+logger = logging.getLogger(__name__)
+_PASSAGEIROS = {408, 429, 500, 502, 503, 504}
 
 
 class GroqProvider:
@@ -26,8 +31,8 @@ class GroqProvider:
         return self._client
 
     def gerar_json(self, sistema: str, usuario: str, schema: type[BaseModel]) -> str:
-        cliente = self._cliente()
         try:
+            cliente = self._cliente()
             resposta = cliente.chat.completions.create(
                 model=self.modelo,
                 messages=[
@@ -38,14 +43,33 @@ class GroqProvider:
                 response_format={"type": "json_object"},
                 temperature=0.4,
             )
-        except (groq_sdk.RateLimitError, groq_sdk.InternalServerError) as exc:
-            raise LLMIndisponivelError(f"Groq indisponível: {exc}") from exc
-        except (groq_sdk.APIConnectionError, groq_sdk.APITimeoutError) as exc:
-            raise LLMIndisponivelError(f"Falha de rede ao chamar a Groq: {exc}") from exc
+            texto = resposta.choices[0].message.content if resposta.choices else None
         except groq_sdk.APIStatusError as exc:
-            raise LLMConfigError(f"Groq recusou a chamada (HTTP {exc.status_code}): {exc}") from exc
+            status = exc.status_code
+            logger.warning(
+                "Groq API falhou: model=%s status=%s detail=%s",
+                self.modelo,
+                status,
+                str(exc),
+            )
+            if status in _PASSAGEIROS:
+                raise LLMIndisponivelError(f"Groq indisponível (HTTP {status}): {exc}") from exc
+            raise LLMConfigError(f"Groq recusou a chamada (HTTP {status}): {exc}") from exc
+        except groq_sdk.APIConnectionError as exc:
+            logger.warning("Falha de transporte Groq: model=%s detail=%s", self.modelo, exc)
+            raise LLMIndisponivelError(f"Falha de rede ao chamar a Groq: {exc}") from exc
+        except LLMConfigError as exc:
+            logger.error("Configuração Groq inválida: model=%s detail=%s", self.modelo, exc)
+            raise
+        except Exception as exc:
+            logger.exception(
+                "Erro inesperado no adaptador Groq: model=%s detail=%s", self.modelo, exc
+            )
+            raise LLMIndisponivelError(
+                f"Erro inesperado ao chamar Groq: {type(exc).__name__}: {exc}"
+            ) from exc
 
-        texto = resposta.choices[0].message.content if resposta.choices else None
         if not texto:
+            logger.warning("Groq devolveu resposta vazia: model=%s", self.modelo)
             raise LLMIndisponivelError("A Groq devolveu uma resposta vazia.")
         return texto

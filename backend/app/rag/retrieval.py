@@ -23,6 +23,7 @@ def buscar_chunks_similares(
     pergunta: str,
     usuario_id: uuid.UUID,
     limite: int = 3,
+    documento_id: uuid.UUID | None = None,  # <-- ADICIONADO AQUI
 ) -> list[ResultadoBusca]:
     """Retorna os chunks mais próximos, limitando a busca aos documentos do usuário."""
     pergunta = pergunta.strip()
@@ -36,13 +37,18 @@ def buscar_chunks_similares(
         raise ValueError("O vetor da pergunta tem dimensão incompatível com os embeddings salvos.")
 
     distancia = Chunk.embedding.cosine_distance(vetor_pergunta).label("distancia_cosseno")
+
     consulta = (
         select(Chunk, distancia)
         .join(Documento, Documento.documento_id == Chunk.documento_id)
         .where(Documento.usuario_id == usuario_id, Chunk.embedding.is_not(None))
-        .order_by(distancia)
-        .limit(limite)
     )
+
+    # CORREÇÃO: Se um documento_id for passado, restringe a busca APENAS a ele
+    if documento_id is not None:
+        consulta = consulta.where(Chunk.documento_id == documento_id)
+
+    consulta = consulta.order_by(distancia).limit(limite)
 
     return [
         ResultadoBusca(chunk=chunk, similaridade=max(-1.0, min(1.0, 1.0 - distancia_cosseno)))

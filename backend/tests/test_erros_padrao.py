@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api._deps import get_current_user  # <-- Adicione essa linha inteira
+from app.api._deps import get_current_user, get_db
 from app.main import app, create_app  # <-- Adicione o create_app aqui
 
 CHAVES = {"status", "codigo", "mensagem", "detalhes", "request_id"}
@@ -15,8 +15,20 @@ BASE = {
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)  # <-- MUDOU AQUI
+def client(mock_auth):
+    overrides_anteriores = app.dependency_overrides.copy()
+    app.dependency_overrides[get_db] = lambda: _DBPerfilSemRegistro()
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(overrides_anteriores)
+
+
+class _DBPerfilSemRegistro:
+    def get(self, modelo, chave):
+        return None
 
 
 def _confere(r, status, codigo):
@@ -26,14 +38,14 @@ def _confere(r, status, codigo):
     return corpo
 
 
-def test_501_nas_rotas_casca(client):
-    for rota in (
-        "/api/v1/perfil",
-        # "/api/v1/usuarios/me",
-        "/api/v1/documentos",
-        "/api/v1/adaptacoes",
-    ):
-        _confere(client.get(rota, headers=AUTH), 501, "NAO_IMPLEMENTADO")
+# def test_501_nas_rotas_casca(client):
+#     for rota in (
+#         "/api/v1/perfil",
+#         # "/api/v1/usuarios/me",
+#         # "/api/v1/documentos",
+#         #"/api/v1/adaptacoes",
+#     ):
+#         _confere(client.get(rota, headers=AUTH), 501, "NAO_IMPLEMENTADO")
 
 
 def test_401_sem_token(client):
@@ -83,12 +95,12 @@ def test_500_formato_padrao():
 
 
 def test_request_id_reaproveita_o_do_cliente(client):
-    r = client.get("/api/v1/perfil", headers={"X-Request-ID": "abc-123"})
+    r = client.get("/api/v1/nao-existe", headers={"X-Request-ID": "abc-123"})
     assert r.json()["request_id"] == "abc-123" and r.headers["X-Request-ID"] == "abc-123"
 
 
 def test_request_id_gerado_quando_ausente(client):
-    assert client.get("/api/v1/perfil").json()["request_id"].startswith("req-")
+    assert client.get("/api/v1/nao-existe").json()["request_id"].startswith("req-")
 
 
 def test_documento_id_invalido_chega_no_400(client):

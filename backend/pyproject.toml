@@ -28,7 +28,7 @@ dependencies = [
   "pgvector>=0.3,<1",
   "pdfplumber>=0.11,<1",
   "pdfminer.six>=20231228",
-  "google-genai>=1.0,<3",
+  "google-genai>=1.0,<4",
    "groq>=0.9",              
 
 ]

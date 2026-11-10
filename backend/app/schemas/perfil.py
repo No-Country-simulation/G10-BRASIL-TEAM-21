@@ -40,6 +40,8 @@ class RespostasQuizResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     acertos: int
     total: int
+    percentual_acerto: float
+    itens_errados: list[int]
     xp_ganho: int
     feedback: list[FeedbackQuizItem]
     trilha_evolucao: TrilhaResumo

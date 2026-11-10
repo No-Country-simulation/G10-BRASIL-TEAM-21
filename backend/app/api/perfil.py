@@ -1,18 +1,19 @@
-from typing import Any
-
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from ..infra.db.models import Usuario
-from ..schemas.common import ErroResposta
 from ..schemas.perfil import PerfilResponse
-from ._deps import get_current_user
-from ._errors import NaoImplementadoError
+from ..services import xp
+from ._deps import get_current_user, get_db
 
 router = APIRouter(prefix="/perfil", tags=["perfil"])
 
-ERR: dict[int | str, dict[str, Any]] = {501: {"model": ErroResposta}}
 
-
-@router.get("", response_model=PerfilResponse, responses=ERR)
-async def obter_perfil(current_user: Usuario = Depends(get_current_user)) -> PerfilResponse:
-    raise NaoImplementadoError()
+@router.get("", response_model=PerfilResponse)
+def obter_perfil(
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PerfilResponse:
+    perfil = xp.perfil_ou_padrao(db, current_user)
+    trilha = xp.montar_trilha(perfil)
+    return PerfilResponse(**trilha.model_dump())

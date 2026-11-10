@@ -161,6 +161,7 @@ class ArmazenamentoOCI(BaseModel):
 
 class AdaptacaoResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    adaptacao_id: str
     status: str = "sucesso"
     versao_schema: Literal["1.0"] = VERSAO_SCHEMA
     request_id: str

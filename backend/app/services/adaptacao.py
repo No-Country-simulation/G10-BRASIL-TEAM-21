@@ -27,7 +27,10 @@ from ..schemas.adaptacao import (
     ocultar_gabarito,
 )
 from ..schemas.adaptacao_output import SAIDA_POR_FORMATO
-from ..schemas.enums import DominioConhecimento, Nivel, StatusUpload
+from ..schemas.enums import DominioConhecimento, FormatoSaida, Nivel, StatusUpload
+
+# IMPORT DA T13
+from . import xp
 
 # Doc 04: documentos de até ~12 chunks vão inteiros para o contexto; acima disso, busca top-k.
 MAX_CHUNKS_CONTEXTO = 12
@@ -103,7 +106,7 @@ def _selecionar_trechos(
                 f"{doc.titulo}. Conceitos principais para {payload.formato_saida.value}",
                 usuario.usuario_id,
                 limite=TOP_K,
-                # documento_id=doc.documento_id,  <-- COMENTE OU REMOVA ESTA LINHA POR ENQUANTO
+                documento_id=doc.documento_id,
             )
         except ErroEmbedding as exc:
             raise ErroApi(
@@ -145,7 +148,11 @@ def _resposta_do_cache(
 ) -> AdaptacaoResponse:
     """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
     resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
-        update={"request_id": request_id, "cache_hit": True}
+        update={
+            "request_id": request_id,
+            "cache_hit": True,
+            "adaptacao_id": str(adaptacao.adaptacao_id),
+        }
     )
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
@@ -173,8 +180,19 @@ def gerar_adaptacao(
             Adaptacao.status_upload == "concluido",
         )
     ).first()
+
     if adaptacao_existente is not None and not forcar_reprocessamento:
-        return _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
+        resposta_cache = _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
+        perfil = xp.perfil_ou_padrao(db, usuario)
+        xp_disponivel = (
+            len(resposta_cache.conteudo_adaptado.itens) * xp.XP_ACERTO_QUIZ
+            if resposta_cache.metadados.formato_gerado == FormatoSaida.QUIZ
+            else 0
+        )
+        resposta_cache.trilha_evolucao = xp.montar_trilha(
+            perfil, xp_disponivel_ao_validar=xp_disponivel
+        )
+        return resposta_cache
 
     schema = SAIDA_POR_FORMATO[payload.formato_saida]
     sistema = montar_sistema(
@@ -197,8 +215,7 @@ def gerar_adaptacao(
             502, "LLM_INDISPONIVEL", "Os provedores de IA estão indisponíveis. Tente mais tarde."
         ) from exc
 
-    saida: Any = resultado.saida  # <-- O 'Any' avisa o VS Code para ignorar a tipagem
-    # RN-11: só vale citar chunk que realmente foi enviado à IA.
+    saida: Any = resultado.saida
     validos = {chunk_id for chunk_id, _ in trechos}
     com_fonte = 0
     for item in saida.itens:
@@ -207,6 +224,7 @@ def gerar_adaptacao(
     ancoragem = round(com_fonte / len(saida.itens), 3)
 
     resposta = AdaptacaoResponse(
+        adaptacao_id="pendente",
         request_id=request_id,
         metadados=Metadados(
             perfil_aplicado=payload.perfil_destinatario,
@@ -245,8 +263,12 @@ def gerar_adaptacao(
             status_upload=StatusUpload.PENDENTE,
         ),
     )
-    # Guarda a resposta completa (inclusive gabarito); a saída HTTP continua respeitando
-    # incluir_gabarito. A opção também faz parte da chave, impedindo colisões de cache.
+
+    # --- LÓGICA DE PERSISTÊNCIA (T12) + XP (T13) ---
+
+    # Variável para armazenar o XP que foi ganho nesta sessão
+    xp_ganho = 0
+
     if adaptacao_existente is None:
         adaptacao_existente = Adaptacao(
             usuario_id=usuario.usuario_id,
@@ -262,18 +284,35 @@ def gerar_adaptacao(
             status_upload="concluido",
         )
         db.add(adaptacao_existente)
+        db.flush()  # Garante que a adaptacao_id exista antes de dar o XP
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
+        adaptacao_existente.resultado = resposta.model_dump(mode="json")
+
+        # AQUI DÁ O XP DA T13! (+5 XP)
+        xp_ganho = xp.registrar_geracao(db, usuario, adaptacao_existente.adaptacao_id)
     else:
-        # O índice único é por usuário + cache_key: reprocessar atualiza essa entrada.
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
         adaptacao_existente.resultado = resposta.model_dump(mode="json")
         adaptacao_existente.ancoragem_fonte_score = ancoragem
         adaptacao_existente.status_upload = "concluido"
+
+    # Atualiza a trilha na resposta
+    perfil = xp.perfil_ou_padrao(db, usuario)
+    xp_disponivel = (
+        len(saida.itens) * xp.XP_ACERTO_QUIZ if payload.formato_saida == FormatoSaida.QUIZ else 0
+    )
+    resposta.trilha_evolucao = xp.montar_trilha(
+        perfil,
+        xp_ganho_sessao=xp_ganho,
+        xp_disponivel_ao_validar=xp_disponivel,
+    )
+    # O JSON persistido precisa conter a trilha atual para respostas de cache.
+    adaptacao_existente.resultado = resposta.model_dump(mode="json")
 
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        # Duas requisições iguais podem terminar a geração ao mesmo tempo. Nesse caso,
-        # devolver a adaptação que venceu a inserção concorrente, em vez de falhar.
         concorrente = db.scalars(
             select(Adaptacao).where(
                 Adaptacao.usuario_id == usuario.usuario_id,
