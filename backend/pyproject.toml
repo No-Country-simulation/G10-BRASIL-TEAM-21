@@ -29,7 +29,8 @@ dependencies = [
   "pdfplumber>=0.11,<1",
   "pdfminer.six>=20231228",
   "google-genai>=1.0,<4",
-   "groq>=0.9",              
+  "groq>=0.9",
+  "tenacity>=8,<10",
 
 ]
 
