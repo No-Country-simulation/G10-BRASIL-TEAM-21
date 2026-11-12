@@ -72,24 +72,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/documentos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar Documentos */
-        get: operations["listar_documentos_api_v1_documentos_get"];
-        put?: never;
-        /** Criar Documento */
-        post: operations["criar_documento_api_v1_documentos_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/documentos/upload": {
         parameters: {
             query?: never;
@@ -124,6 +106,23 @@ export interface paths {
          * @description Busca os três chunks semanticamente mais próximos da pergunta.
          */
         post: operations["buscar_documentos_api_v1_documentos_buscar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Documentos */
+        get: operations["listar_documentos_api_v1_documentos_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -178,7 +177,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Obter Adaptacao */
+        /**
+         * Obter Adaptacao
+         * @description Retorna uma adaptação salva pertencente ao usuário autenticado.
+         */
         get: operations["obter_adaptacao_api_v1_adaptacoes__adaptacao_id__get"];
         put?: never;
         post?: never;
@@ -305,6 +307,8 @@ export interface components {
         };
         /** AdaptacaoResponse */
         AdaptacaoResponse: {
+            /** Adaptacao Id */
+            adaptacao_id: string;
             /**
              * Status
              * @default sucesso
@@ -434,11 +438,6 @@ export interface components {
             itens_ref: number[];
             /** Objetivo */
             objetivo: string;
-        };
-        /** Body_upload_documento_api_v1_documentos_post */
-        Body_upload_documento_api_v1_documentos_post: {
-            /** Arquivo */
-            arquivo: string;
         };
         /** Body_upload_documento_api_v1_documentos_upload_post */
         Body_upload_documento_api_v1_documentos_upload_post: {
@@ -873,6 +872,10 @@ export interface components {
             acertos: number;
             /** Total */
             total: number;
+            /** Percentual Acerto */
+            percentual_acerto: number;
+            /** Itens Errados */
+            itens_errados: number[];
             /** Xp Ganho */
             xp_ganho: number;
             /** Feedback */
@@ -1160,92 +1163,6 @@ export interface operations {
             };
         };
     };
-    listar_documentos_api_v1_documentos_get: {
-        parameters: {
-            query?: {
-                limite?: number;
-                deslocamento?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentosListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
-        };
-    };
-    criar_documento_api_v1_documentos_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /**
-                     * Format: binary
-                     * @description PDF, Markdown ou TXT.
-                     */
-                    arquivo: string;
-                };
-                "application/json": {
-                    /** Titulo */
-                    titulo: string;
-                    /** Conteudo */
-                    conteudo: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentoResponse"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
-        };
-    };
     upload_documento_api_v1_documentos_upload_post: {
         parameters: {
             query?: never;
@@ -1312,6 +1229,38 @@ export interface operations {
             };
         };
     };
+    listar_documentos_api_v1_documentos_get: {
+        parameters: {
+            query?: {
+                limite?: number;
+                deslocamento?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentosListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     obter_documento_api_v1_documentos__documento_id__get: {
         parameters: {
             query?: never;
@@ -1339,15 +1288,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1409,6 +1349,15 @@ export interface operations {
                     "application/json": components["schemas"]["AdaptacaoResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1418,8 +1367,8 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1451,6 +1400,24 @@ export interface operations {
                     "application/json": components["schemas"]["AdaptacaoResponse"];
                 };
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1458,15 +1425,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1504,15 +1462,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErroResposta"];
                 };
             };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1520,6 +1469,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1542,15 +1500,6 @@ export interface operations {
                     "application/json": components["schemas"]["PerfilResponse"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
-                };
-            };
         };
     };
     iniciar_teste_api_v1_testes_nivel_post: {
@@ -1569,15 +1518,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TesteNivelResponse"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };
@@ -1613,15 +1553,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErroResposta"];
                 };
             };
         };

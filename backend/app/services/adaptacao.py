@@ -27,7 +27,7 @@ from ..schemas.adaptacao import (
     ocultar_gabarito,
 )
 from ..schemas.adaptacao_output import SAIDA_POR_FORMATO
-from ..schemas.enums import DominioConhecimento, Nivel, StatusUpload
+from ..schemas.enums import DominioConhecimento, FormatoSaida, Nivel, StatusUpload
 
 # IMPORT DA T13
 from . import xp
@@ -148,7 +148,11 @@ def _resposta_do_cache(
 ) -> AdaptacaoResponse:
     """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
     resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
-        update={"request_id": request_id, "cache_hit": True}
+        update={
+            "request_id": request_id,
+            "cache_hit": True,
+            "adaptacao_id": str(adaptacao.adaptacao_id),
+        }
     )
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
@@ -178,7 +182,17 @@ def gerar_adaptacao(
     ).first()
 
     if adaptacao_existente is not None and not forcar_reprocessamento:
-        return _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
+        resposta_cache = _resposta_do_cache(adaptacao_existente, request_id, incluir_gabarito)
+        perfil = xp.perfil_ou_padrao(db, usuario)
+        xp_disponivel = (
+            len(resposta_cache.conteudo_adaptado.itens) * xp.XP_ACERTO_QUIZ
+            if resposta_cache.metadados.formato_gerado == FormatoSaida.QUIZ
+            else 0
+        )
+        resposta_cache.trilha_evolucao = xp.montar_trilha(
+            perfil, xp_disponivel_ao_validar=xp_disponivel
+        )
+        return resposta_cache
 
     schema = SAIDA_POR_FORMATO[payload.formato_saida]
     sistema = montar_sistema(
@@ -210,6 +224,7 @@ def gerar_adaptacao(
     ancoragem = round(com_fonte / len(saida.itens), 3)
 
     resposta = AdaptacaoResponse(
+        adaptacao_id="pendente",
         request_id=request_id,
         metadados=Metadados(
             perfil_aplicado=payload.perfil_destinatario,
@@ -270,17 +285,29 @@ def gerar_adaptacao(
         )
         db.add(adaptacao_existente)
         db.flush()  # Garante que a adaptacao_id exista antes de dar o XP
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
+        adaptacao_existente.resultado = resposta.model_dump(mode="json")
 
         # AQUI DÁ O XP DA T13! (+5 XP)
         xp_ganho = xp.registrar_geracao(db, usuario, adaptacao_existente.adaptacao_id)
     else:
+        resposta.adaptacao_id = str(adaptacao_existente.adaptacao_id)
         adaptacao_existente.resultado = resposta.model_dump(mode="json")
         adaptacao_existente.ancoragem_fonte_score = ancoragem
         adaptacao_existente.status_upload = "concluido"
 
     # Atualiza a trilha na resposta
     perfil = xp.perfil_ou_padrao(db, usuario)
-    resposta.trilha_evolucao = xp.montar_trilha(perfil, xp_ganho_sessao=xp_ganho)
+    xp_disponivel = (
+        len(saida.itens) * xp.XP_ACERTO_QUIZ if payload.formato_saida == FormatoSaida.QUIZ else 0
+    )
+    resposta.trilha_evolucao = xp.montar_trilha(
+        perfil,
+        xp_ganho_sessao=xp_ganho,
+        xp_disponivel_ao_validar=xp_disponivel,
+    )
+    # O JSON persistido precisa conter a trilha atual para respostas de cache.
+    adaptacao_existente.resultado = resposta.model_dump(mode="json")
 
     try:
         db.commit()
