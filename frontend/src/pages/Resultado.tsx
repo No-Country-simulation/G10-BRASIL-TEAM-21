@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { apiAdaptacoes } from '../api/adaptacoes'
 import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'
@@ -21,11 +22,20 @@ const cenarios = [
 
 export default function Resultado() {
   const { id = 'demo-1' } = useParams()
+  const location = useLocation()
+
+  const resultadoNavegacao = location.state?.resultado as
+    | Adaptacao
+    | undefined
+
   const [params, setParams] = useSearchParams()
   const cenario = params.get('cenario') ?? params.get('estado') ?? 'completo'
   const codigo = params.get('codigo') ?? 'BANCO_INDISPONIVEL'
+
   const [tentativa, setTentativa] = useState(0)
+
   const chave = `${id}|${configuracao.usarMock ? `${cenario}|${codigo}` : ''}|${tentativa}`
+
   const [resposta, setResposta] = useState<{
     chave: string
     dados?: Adaptacao
@@ -33,30 +43,54 @@ export default function Resultado() {
   }>()
 
   useEffect(() => {
+    if (
+      !configuracao.usarMock &&
+      id === 'recente' &&
+      resultadoNavegacao
+    ) {
+      return
+    }
+
     const controller = new AbortController()
+
     const opcoes = {
       cenario: cenarios.includes(cenario as CenarioMock)
         ? (cenario as CenarioMock)
         : ('completo' as const),
       codigo,
     }
+
     apiAdaptacoes.obter(id, controller.signal, opcoes).then(
       (dados) => {
-        if (!controller.signal.aborted) setResposta({ chave, dados })
+        if (!controller.signal.aborted) {
+          setResposta({ chave, dados })
+        }
       },
       (erro: unknown) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setResposta({
             chave,
             erro:
-              erro instanceof ErroApi ? erro : new ErroApi('RESPOSTA_INVALIDA'),
+              erro instanceof ErroApi
+                ? erro
+                : new ErroApi('RESPOSTA_INVALIDA'),
           })
+        }
       },
     )
-    return () => controller.abort()
-  }, [id, chave, cenario, codigo])
 
-  const atual = resposta?.chave === chave ? resposta : undefined
+    return () => controller.abort()
+  }, [id, chave, cenario, codigo, resultadoNavegacao])
+
+  const atual =
+    !configuracao.usarMock &&
+    id === 'recente' &&
+    resultadoNavegacao
+      ? { chave, dados: resultadoNavegacao }
+      : resposta?.chave === chave
+        ? resposta
+        : undefined
+
   const estado = !atual
     ? 'carregando'
     : atual.erro
@@ -64,16 +98,33 @@ export default function Resultado() {
       : !atual.dados?.conteudo_adaptado.itens.length
         ? 'vazio'
         : 'sucesso'
+
+  const links = (
+    <>
+      <Link to="/upload" className="botao botao-primario">
+        {textos.navegacao.upload}
+      </Link>
+
+      <Link to="/historico" className="botao botao-secundario">
+        {textos.navegacao.historico}
+      </Link>
+    </>
+  )
+
   return (
     <section className="pagina">
       {configuracao.usarMock && (
         <fieldset className="cenarios">
           <legend>{textos.mock.titulo}</legend>
+
           <label htmlFor="cenario">{textos.mock.titulo}</label>
+
           <select
             id="cenario"
             value={
-              cenarios.includes(cenario as CenarioMock) ? cenario : 'completo'
+              cenarios.includes(cenario as CenarioMock)
+                ? cenario
+                : 'completo'
             }
             onChange={(e) => {
               const next = new URLSearchParams(params)
@@ -88,7 +139,9 @@ export default function Resultado() {
               </option>
             ))}
           </select>
+
           <label htmlFor="codigo">{textos.mock.codigo}</label>
+
           <select
             id="codigo"
             value={codigo}
@@ -105,18 +158,28 @@ export default function Resultado() {
           </select>
         </fieldset>
       )}
+
       <EstadoTela
         estado={estado}
         erro={atual?.erro}
         mensagemVazia={textos.resultado.vazio}
         aoTentarNovamente={() => setTentativa((n) => n + 1)}
       >
-        {atual?.dados && <PacoteAdaptacao dados={atual.dados} />}
+        {atual?.dados && (
+          <PacoteAdaptacao dados={atual.dados}>
+            {links}
+          </PacoteAdaptacao>
+        )}
       </EstadoTela>
-      <p>
-        <Link to="/upload">{textos.navegacao.upload}</Link> ·{' '}
-        <Link to="/historico">{textos.navegacao.historico}</Link>
-      </p>
+
+      {estado !== 'sucesso' && (
+        <nav
+          className="acoes-resultado"
+          aria-label={textos.navegacao.rotulo ?? 'Ações'}
+        >
+          {links}
+        </nav>
+      )}
     </section>
   )
 }

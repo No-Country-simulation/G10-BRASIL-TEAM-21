@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { configuracao } from '../api/configuracao'
-import type { Perfil } from '../api/tipos'
+import type { AdaptacoesListResponse, Perfil } from '../api/tipos'
+import { apiAdaptacoes } from '../api/adaptacoes'
 import { apiUsuario } from '../api/usuario'
 import { useUsuario } from '../contexts/usuario-context'
 import { textos } from '../texts/pt-BR'
@@ -12,6 +13,11 @@ type EstadoPerfil =
   | { status: 'carregando' }
   | { status: 'ok'; perfil: Perfil }
   | { status: 'indisponivel' }
+
+type EstadoAdaptacoes =
+  | { status: 'carregando' }
+  | { status: 'ok'; dados: AdaptacoesListResponse }
+  | { status: 'erro' }
 
 type Formato = keyof typeof textos.opcoes.formatos
 
@@ -34,34 +40,64 @@ const dataHoje = new Intl.DateTimeFormat('pt-BR', {
 export default function Painel() {
   const t = textos.painel
   const { usuario } = useUsuario()
-  const [perfil, setPerfil] = useState<EstadoPerfil>({ status: 'carregando' })
-
+  const [perfil, setPerfil] = useState<EstadoPerfil>({status: 'carregando',})
+  const [adaptacoes, setAdaptacoes] = useState<EstadoAdaptacoes>({status: 'carregando',})
+  
   useEffect(() => {
     document.title = 'Painel | AdaptAI'
   }, [])
 
   /* O perfil de evolução ainda pode estar indisponível na API: o painel segue funcional */
   useEffect(() => {
-    let ativo = true
+      let ativo = true
 
-    apiUsuario
-      .obterPerfil()
-      .then((dados) => {
-        if (ativo) setPerfil({ status: 'ok', perfil: dados })
-      })
-      .catch(() => {
-        if (ativo) setPerfil({ status: 'indisponivel' })
-      })
+      apiUsuario
+        .obterPerfil()
+        .then((dados) => {
+          if (ativo) setPerfil({ status: 'ok', perfil: dados })
+        })
+        .catch(() => {
+          if (ativo) setPerfil({ status: 'indisponivel' })
+        })
 
-    return () => {
-      ativo = false
+      return () => {
+        ativo = false
+      }
+    }, [])
+
+    
+    /* Carrega as adaptações reais quando a aplicação está conectada à API. */
+  const carregarAdaptacoes = useCallback(async (signal?: AbortSignal) => {
+    if (configuracao.usarMock) return
+
+    setAdaptacoes({ status: 'carregando' })
+
+    try {
+      const dados = await apiAdaptacoes.listar(5, 0, signal)
+      setAdaptacoes({ status: 'ok', dados })
+    } catch (erro) {
+      if (erro instanceof Error && erro.name === 'AbortError') return
+
+      setAdaptacoes({ status: 'erro' })
     }
   }, [])
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const timeoutId = setTimeout(() => {
+      void carregarAdaptacoes(controller.signal)
+    }, 0)
+
+    return () => {
+      clearTimeout(timeoutId)
+      controller.abort()
+    }
+  }, [carregarAdaptacoes])
+
   const nome = primeiroNome(usuario?.nome)
-  const nivelAtual =
-    perfil.status === 'ok' ? perfil.perfil.nivel_atual : usuario?.nivel_atual
-  const rotuloNivel = nivelAtual ? textos.opcoes.niveis[nivelAtual] : null
+  const nivelAtual = perfil.status === 'ok'? perfil.perfil.nivel_atual : usuario?.nivel_atual
+  const rotuloNivel = nivelAtual? textos.opcoes.niveis[nivelAtual as keyof typeof textos.opcoes.niveis] : null
 
   return (
     <div className="painel">
@@ -135,6 +171,51 @@ export default function Painel() {
                 </span>
                 <i className="bi bi-arrow-right" aria-hidden="true" />
               </Link>
+            ) : adaptacoes.status === 'carregando' ? (
+              <div className="painel-vazio" aria-live="polite" aria-busy="true">
+                <span className="painel-icone">
+                  <i className="bi bi-arrow-repeat" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>Carregando adaptações...</strong>
+                  <p>Buscando suas adaptações na API.</p>
+                </div>
+              </div>
+            ) : adaptacoes.status === 'erro' ? (
+              <div className="painel-vazio" role="alert">
+                <span className="painel-icone">
+                  <i className="bi bi-exclamation-circle" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>Não foi possível carregar as adaptações.</strong>
+                  <p>Verifique sua conexão e tente novamente mais tarde.</p>
+                </div>
+              </div>
+            ) : adaptacoes.dados.itens.length > 0 ? (
+              <div>
+                {adaptacoes.dados.itens.map((adaptacao) => (
+                  <Link
+                    key={adaptacao.adaptacao_id}
+                    to={`/resultado/${encodeURIComponent(adaptacao.adaptacao_id)}`}
+                    className="painel-recente"
+                  >
+                    <span className="painel-icone">
+                      <i className="bi bi-file-earmark-text" aria-hidden="true" />
+                    </span>
+
+                    <span className="painel-recente-texto">
+                      <strong>{adaptacao.titulo}</strong>
+                      <span>
+                        {adaptacao.formato_gerado} · {adaptacao.perfil_aplicado}
+                        {' · '}
+                        {formatarData(adaptacao.criado_em)}
+                      </span>
+                    </span>
+
+                    <i className="bi bi-arrow-right" aria-hidden="true" />
+                  </Link>
+                ))}
+              </div>
             ) : (
               <div className="painel-vazio">
                 <span className="painel-icone">
@@ -172,16 +253,7 @@ export default function Painel() {
 
             {perfil.status === 'indisponivel' && (
               <>
-                {rotuloNivel && (
-                  <p className="painel-nivel">
-                    {t.progresso.nivel} {rotuloNivel}
-                  </p>
-                )}
                 <p className="painel-nota">{t.progresso.indisponivel}</p>
-                <Link to="/perfil" className="painel-link">
-                  {t.progresso.verTrilha}
-                  <i className="bi bi-arrow-right" aria-hidden="true" />
-                </Link>
               </>
             )}
           </section>
@@ -258,4 +330,14 @@ function ProgressoXp({
       </div>
     </>
   )
+}
+
+function formatarData(data: string): string {
+  const valor = new Date(data)
+
+  if (Number.isNaN(valor.getTime())) {
+    return 'Data não disponível'
+  }
+
+  return valor.toLocaleDateString('pt-BR')
 }

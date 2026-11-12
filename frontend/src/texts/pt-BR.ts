@@ -16,6 +16,7 @@ export const textos = {
     historico: 'Histórico',
     perfil: 'Meu perfil',
     login: 'Entrar',
+    rotulo: 'Rotulo',
   },
   home: {
     titulo: 'Bem-vindo ao AdaptAI!',
@@ -56,6 +57,7 @@ export const textos = {
     CREDENCIAIS_INVALIDAS: 'E-mail ou senha incorretos.',
     RECURSO_NAO_ENCONTRADO: 'Não encontramos o conteúdo solicitado.',
     EMAIL_JA_CADASTRADO: 'Este e-mail já está cadastrado.',
+    DOCUMENTO_DUPLICADO: 'Este documento já foi enviado e processado anteriormente. Consulte seu histórico ou envie um documento diferente.',
     TESTE_NIVEL_INDISPONIVEL:
       'O Teste de Nível ainda não está disponível para você.',
     ARQUIVO_MUITO_GRANDE: 'O arquivo excede o limite de 10 MB.',
@@ -128,7 +130,7 @@ export const textos = {
     saudacao: 'Bem-vindo de volta',
     saudacaoSemNome: 'Bem-vindo de volta.',
     subtitulo: 'Um bom lugar para continuar: o que você já entendeu e o que vem a seguir.',
-    novaAdaptacao: 'Nova adaptação',
+    novaAdaptacao: 'Adapta AI',
     inicioRapido: {
       selo: 'Início rápido',
       titulo: 'Uma fonte nova, um jeito melhor de aprender.',
@@ -162,7 +164,7 @@ export const textos = {
       proximoMarco: 'Próximo marco',
       restantes: 'XP restantes',
       indisponivel:
-        'O acompanhamento de XP aparece aqui assim que estiver disponível para a sua conta.',
+        'Seu acompanhamento de XP estará disponível aqui em breve.',
       verTrilha: 'Ver meu perfil',
     },
     teste: {

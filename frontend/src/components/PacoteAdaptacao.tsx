@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react'
 import type { Adaptacao, ItemConteudo } from '../api/tipos'
 import { textos } from '../texts/pt-BR'
 
@@ -6,31 +7,178 @@ const percentual = (valor: number) =>
   `${Math.round(Math.max(0, Math.min(1, valor)) * 100)}%`
 const lista = (itens: string[]) => itens.join(', ') || t.nenhum
 
-function ItemAdaptado({ item }: { item: ItemConteudo }) {
-  return (
-    <article className="cartao">
-      {'frente' in item && (
-        <>
-          <h2>{item.frente}</h2>
-          <p>{item.verso}</p>
-          <p>
+function obterAnalogiaRef(item: ItemConteudo): string | null {
+  if ('analogia_ref' in item && typeof item.analogia_ref === 'string') {
+    return item.analogia_ref
+  }
+
+  return null
+}
+
+function ItemAdaptado({
+  item,
+  onQuizConfirmado,
+}: {
+  item: ItemConteudo
+  onQuizConfirmado?: () => void
+}) {
+  const [versoVisivel, setVersoVisivel] = useState(false)
+  const [alternativaSelecionada, setAlternativaSelecionada] = useState<
+    string | null
+  >(null)
+  const [quizConfirmado, setQuizConfirmado] = useState(false)
+
+  if ('frente' in item) {
+    const analogia = obterAnalogiaRef(item)
+    return (
+      <article className="flashcard-card">
+        <button
+          type="button"
+          className="flashcard"
+          data-verso={versoVisivel}
+          onClick={() => setVersoVisivel((v) => !v)}
+          aria-label={
+            versoVisivel
+              ? 'Voltar para a frente do flashcard'
+              : 'Revelar resposta do flashcard'
+          }
+          aria-expanded={versoVisivel}
+        >
+          <span className="flashcard-status">
+            {versoVisivel ? 'Resposta' : 'Pergunta'}
+          </span>
+          <span className="flashcard-conteudo">
+            {versoVisivel ? item.verso : item.frente}
+          </span>
+          <span className="flashcard-instrucao">
+            {versoVisivel ? 'Toque para voltar' : 'Toque para revelar'}
+          </span>
+        </button>
+
+        {versoVisivel && item.dica_didatica && (
+          <p className="flashcard-dica">
             <strong>{t.dica}:</strong> {item.dica_didatica}
           </p>
-        </>
-      )}
-      {'pergunta' in item && (
-        <>
-          <h2>{item.pergunta}</h2>
-          <ul>
-            {item.alternativas.map((a) => (
-              <li key={a.id}>
-                {a.id}) {a.texto}
-              </li>
-            ))}
-          </ul>
-          <p>{t.quiz}</p>
-        </>
-      )}
+        )}
+
+        <footer className="flashcard-rodape">
+          <span className="chip">{item.conceito_ref}</span>
+          {analogia && <span className="chip">{analogia}</span>}
+          <details className="flashcard-fontes">
+            <summary>{t.fontes}</summary>
+            {lista(item.fontes_chunks)}
+          </details>
+        </footer>
+      </article>
+    )
+  }
+
+  if ('pergunta' in item) {
+    const respostaDisponivel = Boolean(item.resposta_correta)
+    const acertou =
+      respostaDisponivel && alternativaSelecionada === item.resposta_correta
+    const analogia = obterAnalogiaRef(item)
+
+    return (
+      <article className="quiz-card">
+        <span className="quiz-status">Quiz</span>
+
+        <h2 className="quiz-pergunta">{item.pergunta}</h2>
+
+        <div
+          className="quiz-alternativas"
+          role="group"
+          aria-label="Alternativas"
+        >
+          {item.alternativas.map((alternativa) => {
+            const selecionada = alternativaSelecionada === alternativa.id
+            const correta =
+              quizConfirmado &&
+              respostaDisponivel &&
+              alternativa.id === item.resposta_correta
+            const incorreta =
+              quizConfirmado && respostaDisponivel && selecionada && !acertou
+
+            return (
+              <button
+                key={alternativa.id}
+                type="button"
+                className={[
+                  'quiz-alternativa',
+                  selecionada ? 'selecionada' : '',
+                  correta ? 'correta' : '',
+                  incorreta ? 'incorreta' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => {
+                  if (!quizConfirmado) setAlternativaSelecionada(alternativa.id)
+                }}
+                disabled={quizConfirmado}
+                aria-pressed={selecionada}
+              >
+                <span className="quiz-alternativa-id">
+                  {alternativa.id.toUpperCase()}
+                </span>
+                <span className="quiz-alternativa-texto">
+                  {alternativa.texto}
+                </span>
+                {correta && <span aria-label="Resposta correta">✓</span>}
+                {incorreta && <span aria-label="Resposta incorreta">✕</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        {!quizConfirmado ? (
+          <button
+            type="button"
+            className="botao-confirmar-quiz"
+            disabled={!alternativaSelecionada}
+            onClick={() => {
+              setQuizConfirmado(true)
+              onQuizConfirmado?.()
+            }}
+          >
+            Confirmar resposta
+          </button>
+        ) : (
+          <div
+            className={`quiz-feedback ${acertou ? 'feedback-correto' : 'feedback-incorreto'}`}
+            role="status"
+          >
+            {respostaDisponivel ? (
+              <>
+                <strong>
+                  {acertou ? 'Resposta correta!' : 'Resposta incorreta.'}
+                </strong>
+                {!acertou && (
+                  <p>
+                    Resposta correta: {item.resposta_correta?.toUpperCase()}
+                  </p>
+                )}
+              </>
+            ) : (
+              <strong>Resposta registrada. Gabarito não disponível.</strong>
+            )}
+            {item.justificativa && <p>{item.justificativa}</p>}
+          </div>
+        )}
+
+        <footer className="flashcard-rodape">
+          <span className="chip">{item.conceito_ref}</span>
+          {analogia && <span className="chip">{analogia}</span>}
+          <details className="flashcard-fontes">
+            <summary>{t.fontes}</summary>
+            {lista(item.fontes_chunks)}
+          </details>
+        </footer>
+      </article>
+    )
+  }
+
+  return (
+    <article className="cartao">
       {'passo' in item && (
         <>
           <h2>
@@ -44,6 +192,7 @@ function ItemAdaptado({ item }: { item: ItemConteudo }) {
           )}
         </>
       )}
+
       {'topico' in item && (
         <>
           <h2>{item.topico}</h2>
@@ -53,6 +202,7 @@ function ItemAdaptado({ item }: { item: ItemConteudo }) {
           </p>
         </>
       )}
+
       {'bloco' in item && (
         <>
           <h2>
@@ -69,14 +219,17 @@ function ItemAdaptado({ item }: { item: ItemConteudo }) {
           )}
         </>
       )}
+
       <small>
         {t.conceito}: {item.conceito_ref}
       </small>
-      {'analogia_ref' in item && item.analogia_ref && (
+
+      {obterAnalogiaRef(item) && (
         <small>
-          {t.analogiaRef}: {item.analogia_ref}
+          {t.analogiaRef}: {obterAnalogiaRef(item)}
         </small>
       )}
+
       <small>
         {t.fontes}: {lista(item.fontes_chunks)}
       </small>
@@ -84,11 +237,30 @@ function ItemAdaptado({ item }: { item: ItemConteudo }) {
   )
 }
 
-export function PacoteAdaptacao({ dados }: { dados: Adaptacao }) {
+export function PacoteAdaptacao({
+  dados,
+  children,
+}: {
+  dados: Adaptacao
+  children?: ReactNode
+}) {
+  const [confirmados, setConfirmados] = useState<Set<number>>(new Set())
+  const [resetKey, setResetKey] = useState(0)
+
+  const itens = dados.conteudo_adaptado.itens
+  const totalQuizzes = itens.filter((i) => 'pergunta' in i).length
+  const todosRespondidos = totalQuizzes > 0 && confirmados.size === totalQuizzes
+
+  const reiniciarQuiz = () => {
+    setConfirmados(new Set())
+    setResetKey((k) => k + 1)
+  }
+
   const m = dados.metadados
   const q = dados.avaliacao_qualidade
   const trilha = dados.trilha_evolucao
   const status = dados.armazenamento_oci?.status_upload ?? 'pendente'
+
   return (
     <>
       <h1>{dados.conteudo_adaptado.titulo}</h1>
@@ -143,8 +315,14 @@ export function PacoteAdaptacao({ dados }: { dados: Adaptacao }) {
         </p>
       )}
       <div className="lista-cartoes">
-        {dados.conteudo_adaptado.itens.map((item, i) => (
-          <ItemAdaptado key={i} item={item} />
+        {itens.map((item, i) => (
+          <ItemAdaptado
+            key={`${i}-${resetKey}`}
+            item={item}
+            onQuizConfirmado={() =>
+              setConfirmados((prev) => new Set(prev).add(i))
+            }
+          />
         ))}
       </div>
       <section className="cartao">
@@ -280,6 +458,19 @@ export function PacoteAdaptacao({ dados }: { dados: Adaptacao }) {
           </p>
         </section>
       )}
+
+      <div className="acoes-resultado">
+        {children}
+        {todosRespondidos && (
+          <button
+            type="button"
+            className="botao botao-secundario"
+            onClick={reiniciarQuiz}
+          >
+            Refazer quiz
+          </button>
+        )}
+      </div>
     </>
   )
 }

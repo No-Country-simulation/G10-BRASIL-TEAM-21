@@ -82,8 +82,8 @@ export default function Upload() {
                 if (!payload.documento_titulo || !payload.documento_conteudo)
                   throw new ErroApi('REQUISICAO_INVALIDA')
               }
-              await apiAdaptacoes.gerar(payload)
-              navigate('/resultado/recente')
+              const resultado = await apiAdaptacoes.gerar(payload)
+              navigate('/resultado/recente', {state: { resultado },})
             } catch (falha) {
               setErro(
                 falha instanceof ErroApi ? falha : new ErroApi('DESCONHECIDO'),
