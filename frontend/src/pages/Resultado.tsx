@@ -88,6 +88,16 @@ export default function Resultado() {
       : !atual.dados?.conteudo_adaptado.itens.length
         ? 'vazio'
         : 'sucesso'
+  const links = (
+    <>
+      <Link to="/upload" className="botao botao-primario">
+        {textos.navegacao.upload}
+      </Link>
+      <Link to="/historico" className="botao botao-secundario">
+        {textos.navegacao.historico}
+      </Link>
+    </>
+  )
   return (
     <section className="pagina">
       {configuracao.usarMock && (
@@ -135,12 +145,20 @@ export default function Resultado() {
         mensagemVazia={textos.resultado.vazio}
         aoTentarNovamente={() => setTentativa((n) => n + 1)}
       >
-        {atual?.dados && <PacoteAdaptacao dados={atual.dados} />}
+        {atual?.dados && (
+          <PacoteAdaptacao dados={atual.dados}>
+            {links}
+          </PacoteAdaptacao>
+        )}
       </EstadoTela>
-      <p>
-        <Link to="/upload">{textos.navegacao.upload}</Link> ·{' '}
-        <Link to="/historico">{textos.navegacao.historico}</Link>
-      </p>
+      {estado !== 'sucesso' && (
+        <nav
+          className="acoes-resultado"
+          aria-label={textos.navegacao.rotulo ?? 'Ações'}
+        >
+          {links}
+        </nav>
+      )}
     </section>
   )
 }

@@ -146,14 +146,18 @@ def _gerar_cache_key(
 def _resposta_do_cache(
     adaptacao: Adaptacao, request_id: str, incluir_gabarito: bool
 ) -> AdaptacaoResponse:
-    """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
-    resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
+    """Reconstitui o JSONB e aplica os dados atuais da adaptação."""
+    dados = dict(adaptacao.resultado or {})
+
+    dados["adaptacao_id"] = str(adaptacao.adaptacao_id)
+
+    resposta = AdaptacaoResponse.model_validate(dados).model_copy(
         update={
             "request_id": request_id,
             "cache_hit": True,
-            "adaptacao_id": str(adaptacao.adaptacao_id),
         }
     )
+
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
 

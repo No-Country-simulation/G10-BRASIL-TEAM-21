@@ -185,3 +185,317 @@ progress {
   }
 }
 
+/* Ações de navegação (links com aparência de botão) */
+.acoes-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.botao:active {
+  transform: translateY(1px);
+}
+
+.botao-primario {
+  color: #fff;
+  background: var(--app-primary);
+}
+.botao-primario:hover {
+  background: var(--app-primary-hover);
+}
+
+.botao-secundario {
+  color: var(--app-primary);
+  background: transparent;
+  border-color: var(--app-primary);
+}
+.botao-secundario:hover {
+  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+}
+
+@media (max-width: 600px) {
+  .acoes-resultado {
+    flex-direction: column;
+  }
+  .botao {
+    width: 100%;
+  }
+}
+
+.botao,
+.botao:hover {
+  text-decoration: none;
+}
+.botao-primario,
+.botao-primario:hover {
+  color: #fff;
+}
+
+.acoes-resultado.esquerda {
+  justify-content: flex-start;
+}
+
+/* Card externo: leve, sem sombra pesada */
+.flashcard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+}
+
+/* Área clicável (precisa de .pagina button.flashcard para vencer o estilo global) */
+.pagina button.flashcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 160px;
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.pagina button.flashcard:hover {
+  background: var(--app-page-bg);
+  border-color: var(--app-primary);
+}
+
+/* Verso com destaque sutil */
+.pagina button.flashcard[data-verso='true'] {
+  background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+  border-color: var(--app-primary);
+}
+
+.flashcard-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-primary);
+}
+
+.flashcard-conteudo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.flashcard-instrucao {
+  font-size: 0.78rem;
+  color: var(--app-text-secondary);
+}
+
+.flashcard-dica {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--app-primary);
+  background: color-mix(in srgb, var(--app-primary) 6%, transparent);
+  border-radius: 6px;
+}
+
+/* Rodapé discreto */
+.flashcard-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--app-text-secondary);
+}
+
+.chip {
+  padding: 3px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.flashcard-fontes {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.flashcard-fontes summary {
+  cursor: pointer;
+}
+
+.quiz-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+}
+
+.quiz-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-primary);
+}
+
+.quiz-pergunta {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.quiz-alternativas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Alternativa: linha neutra, não botão de ação */
+.pagina button.quiz-alternativa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pagina button.quiz-alternativa:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--app-primary) 6%, transparent);
+  border-color: var(--app-primary);
+}
+
+.pagina button.quiz-alternativa:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.quiz-alternativa-id {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--app-primary);
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  background: var(--app-card-bg);
+}
+
+.quiz-alternativa-texto {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Estados */
+.pagina button.quiz-alternativa.selecionada {
+  border: 2px solid var(--app-primary);
+  background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+}
+
+.pagina button.quiz-alternativa.selecionada .quiz-alternativa-id {
+  color: #fff;
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+}
+
+.pagina button.quiz-alternativa.correta {
+  border: 2px solid #198754;
+  background: color-mix(in srgb, #198754 10%, transparent);
+}
+
+.pagina button.quiz-alternativa.correta .quiz-alternativa-id {
+  color: #fff;
+  background: #198754;
+  border-color: #198754;
+}
+
+.pagina button.quiz-alternativa.incorreta {
+  border: 2px solid #dc3545;
+  background: color-mix(in srgb, #dc3545 10%, transparent);
+}
+
+.pagina button.quiz-alternativa.incorreta .quiz-alternativa-id {
+  color: #fff;
+  background: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Confirmar: a única ação em azul sólido */
+.pagina button.botao-confirmar-quiz {
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 10px 20px;
+}
+
+.pagina button.botao-confirmar-quiz:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Feedback */
+.quiz-feedback {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.quiz-feedback p {
+  margin: 6px 0 0;
+}
+
+.feedback-correto {
+  color: var(--bs-success-text-emphasis, #0f5132);
+  background: color-mix(in srgb, #198754 12%, transparent);
+}
+
+.feedback-incorreto {
+  color: var(--bs-danger-text-emphasis, #842029);
+  background: color-mix(in srgb, #dc3545 12%, transparent);
+}
+
+.pagina button.botao-secundario {
+  color: var(--app-primary);
+  background: transparent;
+  border: 1px solid var(--app-primary);
+}
+
+.pagina button.botao-secundario:hover {
+  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiAdaptacoes } from '../api/adaptacoes'
 import { configuracao } from '../api/configuracao'
 import { ErroApi } from '../api/erros'

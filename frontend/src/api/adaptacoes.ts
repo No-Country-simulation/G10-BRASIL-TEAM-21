@@ -3,7 +3,7 @@ import { configuracao, type ConfiguracaoApi } from './configuracao'
 import { ErroApi } from './erros'
 import type { OpcoesMock } from './mock'
 import { obterTokenAcesso } from './sessao'
-import type { Adaptacao, AdaptacaoRequest, UploadDocumentoResponse } from './tipos'
+import type { Adaptacao, AdaptacaoRequest, AdaptacoesListResponse, UploadDocumentoResponse } from './tipos'
 
 export function criarApiAdaptacoes(
   config: ConfiguracaoApi,
@@ -22,6 +22,27 @@ export function criarApiAdaptacoes(
   }
 
   return {
+    async listar(limite = 5, deslocamento = 0, signal?: AbortSignal,): Promise<AdaptacoesListResponse> {
+      if (config.usarMock) {
+        return {
+          itens: [],
+          total: 0,
+        }
+      }
+
+      const parametros = new URLSearchParams({
+        limite: String(limite),
+        deslocamento: String(deslocamento),
+      })
+
+      return exigirResposta(
+        requisitar<AdaptacoesListResponse>(
+          `adaptacoes?${parametros.toString()}`,
+          { signal },
+        ),
+      )
+    },
+    
     async obter(
       id: string,
       signal?: AbortSignal,
@@ -31,14 +52,21 @@ export function criarApiAdaptacoes(
         const { obterMock } = await import('./mock')
         return obterMock(mock, signal)
       }
+
       if (id === 'recente') {
         if (!recente) throw new ErroApi('RECURSO_NAO_ENCONTRADO', 404)
         return recente
       }
+
+      const parametros = new URLSearchParams({
+        incluir_gabarito: 'true',
+      })
+
       return exigirResposta(
-        requisitar<Adaptacao>(`adaptacoes/${encodeURIComponent(id)}`, {
-          signal,
-        }),
+        requisitar<Adaptacao>(
+          `adaptacoes/${encodeURIComponent(id)}?${parametros.toString()}`,
+          { signal },
+        ),
       )
     },
     async gerar(
