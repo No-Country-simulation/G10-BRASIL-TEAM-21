@@ -37,7 +37,7 @@ describe('cliente de API', () => {
       'id /?#',
     )
     expect(rede.mock.calls[0][0]).toBe(
-      'https://api.exemplo/api/v1/adaptacoes/id%20%2F%3F%23',
+      'https://api.exemplo/api/v1/adaptacoes/id%20%2F%3F%23?incluir_gabarito=true',
     )
     expect(
       new Headers(rede.mock.calls[0][1]?.headers).get('Authorization'),
