@@ -85,9 +85,14 @@ export default function Painel() {
   useEffect(() => {
     const controller = new AbortController()
 
-    void carregarAdaptacoes(controller.signal)
+    const timeoutId = setTimeout(() => {
+      void carregarAdaptacoes(controller.signal)
+    }, 0)
 
-    return () => controller.abort()
+    return () => {
+      clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [carregarAdaptacoes])
 
   const nome = primeiroNome(usuario?.nome)
