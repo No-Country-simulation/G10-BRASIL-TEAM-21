@@ -17,8 +17,12 @@ def _fabrica() -> sessionmaker:
     return sessionmaker(bind=get_engine(), autoflush=False)
 
 
+def create_session() -> Session:
+    return _fabrica()()
+
+
 def get_db() -> Iterator[Session]:
-    db = _fabrica()()
+    db = create_session()
     try:
         yield db
     finally:
