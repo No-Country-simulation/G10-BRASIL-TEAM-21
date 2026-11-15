@@ -21,6 +21,7 @@ Cada ADR registra **uma decisão**, o contexto em que foi tomada, as alternativa
 | [ADR-0013](./ADR-0013-postgresql-como-banco-de-leitura.md) | PostgreSQL como banco de leitura; Object Storage como arquivo e evidência | Aceito |
 | [ADR-0014](./ADR-0014-pgvector-como-vector-store.md) | `pgvector` como vector store (índice reconstruível a partir do bucket) | Aceito |
 | [ADR-0015](./ADR-0015-docker-compose-e-backend-unico.md) | Docker Compose, backend único e VM como bônus | Aceito |
+| [ADR-0016](./ADR-0016-sqlalchemy-psycopg-pgvector.md) | SQLAlchemy 2.x, psycopg 3 e pgvector para acesso a dados | Aceito |
 
 ## Modelo para novos ADRs
 

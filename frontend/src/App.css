@@ -1,184 +1,501 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+﻿#root {
+  min-height: 100vh;
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+.pagina h1 {
+  margin-top: 0;
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
 }
 
-#center {
+.pagina > p {
+  color: var(--app-text-secondary);
+  line-height: 1.6;
+}
+
+.pagina form,
+.cartao {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  gap: 14px;
+  padding: 24px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 27, 76, 0.04);
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+.pagina form {
+  margin-top: 24px;
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.pagina label {
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
+.pagina input:not([type='checkbox']):not([type='file']),
+.pagina select {
   width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+.pagina input[type='checkbox'] {
+  margin-right: 8px;
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+.pagina button {
+  min-height: 46px;
+  padding: 12px 18px;
+  color: #fff;
+  background: var(--app-primary);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.pagina button:hover {
+  background: var(--app-primary-hover);
+}
+
+.cartao {
+  margin-top: 20px;
+}
+
+.cartao h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.aviso {
+  margin-top: 20px;
+  padding: 16px;
+  color: var(--bs-warning-text-emphasis, #664d03);
+  background: color-mix(in srgb, #f5a524 14%, transparent);
+  border: 1px solid color-mix(in srgb, #f5a524 40%, transparent);
+  border-radius: 10px;
+}
+
+progress {
+  width: 100%;
+  height: 12px;
+  accent-color: var(--app-primary);
+}
+
+.lista-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+}
+
+.estado {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin: 24px 0;
+  padding: 28px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-card-bg);
+}
+.estado p,
+.cartao p {
+  margin: 0;
+  line-height: 1.6;
+}
+.carregando {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--app-border);
+  border-top-color: var(--app-primary);
+  border-radius: 50%;
+  animation: girar 1s linear infinite;
+}
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+}
+.metadados {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 2fr;
+  gap: 12px;
+  margin: 0;
+}
+.metadados dt {
+  font-weight: 600;
+}
+.metadados dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cenarios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 28px;
+  padding: 18px;
+  border: 1px dashed var(--app-border);
+  border-radius: 12px;
+}
+.cenarios select {
+  width: auto;
+  max-width: 100%;
+}
+.sucesso {
+  padding: 12px;
+  color: var(--bs-success-text-emphasis, #0f5132);
+  background: color-mix(in srgb, #198754 14%, transparent);
+  border-radius: 8px;
+}
+.pagina textarea {
+  padding: 12px;
+  width: 100%;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  resize: vertical;
+}
+.cartao article + article {
+  border-top: 1px solid var(--app-border);
+  margin-top: 16px;
+}
+:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .carregando {
+    animation: none;
   }
+}
+@media (max-width: 600px) {
+  .metadados {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .metadados dd {
+    margin-bottom: 10px;
+  }
+}
+
+/* Ações de navegação (links com aparência de botão) */
+.acoes-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.botao:active {
+  transform: translateY(1px);
+}
+
+.botao-primario {
+  color: #fff;
+  background: var(--app-primary);
+}
+.botao-primario:hover {
+  background: var(--app-primary-hover);
+}
+
+.botao-secundario {
+  color: var(--app-primary);
+  background: transparent;
+  border-color: var(--app-primary);
+}
+.botao-secundario:hover {
+  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+}
+
+@media (max-width: 600px) {
+  .acoes-resultado {
+    flex-direction: column;
+  }
+  .botao {
+    width: 100%;
+  }
+}
+
+.botao,
+.botao:hover {
+  text-decoration: none;
+}
+.botao-primario,
+.botao-primario:hover {
+  color: #fff;
+}
+
+.acoes-resultado.esquerda {
+  justify-content: flex-start;
+}
+
+/* Card externo: leve, sem sombra pesada */
+.flashcard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+}
+
+/* Área clicável (precisa de .pagina button.flashcard para vencer o estilo global) */
+.pagina button.flashcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 160px;
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.pagina button.flashcard:hover {
+  background: var(--app-page-bg);
+  border-color: var(--app-primary);
+}
+
+/* Verso com destaque sutil */
+.pagina button.flashcard[data-verso='true'] {
+  background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+  border-color: var(--app-primary);
+}
+
+.flashcard-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-primary);
+}
+
+.flashcard-conteudo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.flashcard-instrucao {
+  font-size: 0.78rem;
+  color: var(--app-text-secondary);
+}
+
+.flashcard-dica {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--app-primary);
+  background: color-mix(in srgb, var(--app-primary) 6%, transparent);
+  border-radius: 6px;
+}
+
+/* Rodapé discreto */
+.flashcard-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--app-text-secondary);
+}
+
+.chip {
+  padding: 3px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.flashcard-fontes {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.flashcard-fontes summary {
+  cursor: pointer;
+}
+
+.quiz-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+}
+
+.quiz-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-primary);
+}
+
+.quiz-pergunta {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.quiz-alternativas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Alternativa: linha neutra, não botão de ação */
+.pagina button.quiz-alternativa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--app-text);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pagina button.quiz-alternativa:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--app-primary) 6%, transparent);
+  border-color: var(--app-primary);
+}
+
+.pagina button.quiz-alternativa:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.quiz-alternativa-id {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--app-primary);
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  background: var(--app-card-bg);
+}
+
+.quiz-alternativa-texto {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Estados */
+.pagina button.quiz-alternativa.selecionada {
+  border: 2px solid var(--app-primary);
+  background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+}
+
+.pagina button.quiz-alternativa.selecionada .quiz-alternativa-id {
+  color: #fff;
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+}
+
+.pagina button.quiz-alternativa.correta {
+  border: 2px solid #198754;
+  background: color-mix(in srgb, #198754 10%, transparent);
+}
+
+.pagina button.quiz-alternativa.correta .quiz-alternativa-id {
+  color: #fff;
+  background: #198754;
+  border-color: #198754;
+}
+
+.pagina button.quiz-alternativa.incorreta {
+  border: 2px solid #dc3545;
+  background: color-mix(in srgb, #dc3545 10%, transparent);
+}
+
+.pagina button.quiz-alternativa.incorreta .quiz-alternativa-id {
+  color: #fff;
+  background: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Confirmar: a única ação em azul sólido */
+.pagina button.botao-confirmar-quiz {
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 10px 20px;
+}
+
+.pagina button.botao-confirmar-quiz:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Feedback */
+.quiz-feedback {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.quiz-feedback p {
+  margin: 6px 0 0;
+}
+
+.feedback-correto {
+  color: var(--bs-success-text-emphasis, #0f5132);
+  background: color-mix(in srgb, #198754 12%, transparent);
+}
+
+.feedback-incorreto {
+  color: var(--bs-danger-text-emphasis, #842029);
+  background: color-mix(in srgb, #dc3545 12%, transparent);
+}
+
+.pagina button.botao-secundario {
+  color: var(--app-primary);
+  background: transparent;
+  border: 1px solid var(--app-primary);
+}
+
+.pagina button.botao-secundario:hover {
+  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
 }

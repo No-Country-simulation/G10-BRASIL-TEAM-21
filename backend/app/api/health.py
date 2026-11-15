@@ -1,13 +1,22 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Response
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from app import __version__
-from app.schemas.health import HealthResponse
+from ..schemas.health import HealthResponse
+from ._deps import get_db
 
-router = APIRouter(tags=["saude"])
+router = APIRouter(tags=["health"])
 
 
-@router.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    # Por enquanto só confirma que a API está de pé. A checagem do banco e do pgvector
-    # entra com US-008 e a do bucket com US-006/US-035 (contrato, seção 2).
-    return HealthResponse(status="ok", versao=__version__)
+@router.get("/health", response_model=HealthResponse, responses={503: {"model": HealthResponse}})
+def health(response: Response, db: Session = Depends(get_db)) -> dict:
+    estado = {"api": "ok", "db": "ok", "pgvector": "ok"}
+    try:
+        db.execute(text("SELECT 1"))
+        if db.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")).first() is None:
+            estado["pgvector"] = "falha"
+            response.status_code = 503
+    except Exception:
+        estado.update(db="falha", pgvector="desconhecido")
+        response.status_code = 503
+    return estado

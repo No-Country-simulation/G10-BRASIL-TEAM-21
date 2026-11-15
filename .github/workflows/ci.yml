@@ -29,8 +29,8 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -40,13 +40,19 @@ jobs:
               - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
+              - 'backend/docs/openapi.json'
+              - 'backend/app/schemas/**'
+              - 'backend/app/api/**'
+              - 'backend/app/main.py'
+              - 'backend/scripts/export_openapi.py'
+              - 'docs/05 - Contrato de API.md'
               - '.github/workflows/ci.yml'
 
   segredos:
     name: Segredos e arquivos proibidos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -69,7 +75,7 @@ jobs:
     name: Validar docker-compose
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: docker compose config
         run: |
           cp .env.example .env
@@ -84,8 +90,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -130,8 +136,8 @@ jobs:
       EMBEDDING_MODEL: fake
       EMBEDDING_DIM: "8"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -162,11 +168,12 @@ jobs:
 
       - name: Publicar relatório de testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-pytest-report
           path: backend/pytest-report.xml
           if-no-files-found: ignore
+
 
   frontend:
     name: Frontend · lint, testes e build
@@ -177,14 +184,16 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Instalar dependências
         run: npm ci
+      - name: Verificar tipos gerados do OpenAPI
+        run: npm run check:api
       - name: Lint
         run: npm run lint --if-present
       - name: Checagem de tipos
@@ -204,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # TEMPORÁRIO: enquanto não existirem os Dockerfiles (US-001 e US-007), o job
       # só avisa e termina com sucesso. Quando existirem, ele passa a valer sozinho.

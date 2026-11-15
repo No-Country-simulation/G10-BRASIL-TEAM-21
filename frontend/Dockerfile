@@ -1,19 +1,16 @@
-# Servidor de desenvolvimento do Vite (uso local e demonstração via Compose).
-# Requer package.json e package-lock.json em frontend/ (gere com "npm create vite@latest" e "npm install").
-FROM node:22-alpine
-
+# ESTÁGIO 1: Build
+FROM node:26-alpine AS build
 WORKDIR /app
-
-# Dependências primeiro: a camada fica em cache enquanto o package*.json não mudar.
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm ci
-
 COPY . .
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
 
-# Sem privilégios de root. node_modules pertence ao usuário "node".
-RUN chown -R node:node /app
-USER node
+# ESTÁGIO 2: Servir estáticos
+FROM nginx:alpine
 
-EXPOSE 5173
-# --host é obrigatório: sem ele o Vite escuta só em localhost, dentro do container.
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
