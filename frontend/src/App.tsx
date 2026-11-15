@@ -10,6 +10,7 @@ import Perfil from './pages/Perfil'
 import './App.css'
 import RotaProtegida from './components/auth/RotaProtegida'
 import Layout from './components/layout/Layout'
+import TesteNivel from './pages/TesteNivel.tsx'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/resultado/:id" element={<Resultado />} />
           <Route path="/historico" element={<Historico />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/teste-nivel" element={<TesteNivel />} />
         </Route>
       </Route>
 

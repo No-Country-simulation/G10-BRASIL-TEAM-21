@@ -31,7 +31,7 @@ class GeminiProvider:
             self._client = genai.Client(
                 api_key=self._api_key,
                 http_options=types.HttpOptions(
-                    timeout=10000,  # 10 segundos
+                    timeout=self._timeout_s * 1000,
                     retry_options=types.HttpRetryOptions(
                         attempts=1  # Desativa retentativas automáticas
                     ),
