@@ -1,8 +1,11 @@
 import sys
+
 from sqlalchemy import select
+
 from app.core.security import hash_senha
 from app.infra.db.models import Usuario
 from app.infra.db.session import _fabrica
+
 
 def seed_demo_user():
     db = None
@@ -27,10 +30,11 @@ def seed_demo_user():
         print(f"⚠️ Aviso: Não foi possível criar o usuário demo. Motivo: {e}")
         if db:
             db.rollback()
-        sys.exit(0) # Força a saída com sucesso para não quebrar o Docker
+        sys.exit(0)  # Força a saída com sucesso para não quebrar o Docker
     finally:
         if db:
             db.close()
+
 
 if __name__ == "__main__":
     seed_demo_user()
