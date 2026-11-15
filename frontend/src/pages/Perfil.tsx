@@ -6,6 +6,7 @@ import type { Perfil as PerfilApi } from '../api/tipos'
 import type { Estado } from '../hooks/useEstadoMock'
 import type { ErroApi } from '../api/erros'
 import { textos } from '../texts/pt-BR'
+import { Link } from 'react-router-dom'
 
 export default function Perfil() {
   const t = textos.perfil
@@ -118,12 +119,22 @@ export default function Perfil() {
 
               {perfil.sugestao_promocao && <p>{r.sugestao}</p>}
 
-              <button
-                type="button"
-                disabled={!perfil.teste_nivel_disponivel}
-              >
-                {t.fazerTeste}
-              </button>
+              {perfil.teste_nivel_disponivel ? (
+                <Link
+                  to="/teste-nivel"
+                  className="btn btn-primary"
+                >
+                  {t.fazerTeste}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled
+                >
+                  {t.fazerTeste}
+                </button>
+              )}
 
               {!perfil.teste_nivel_disponivel && (
                 <p>{t.testeIndisponivel}</p>
