@@ -1,30 +1,38 @@
-"""Criação da aplicação FastAPI. Rode com: uvicorn app.main:app"""
+"""App FastAPI do AdaptAI."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import __version__
-from app.api.health import router as health_router
-from app.config import get_settings
-
-API_PREFIX = "/api/v1"
+from .api import adaptacoes, auth, documentos, health, perfil, teste_nivel
+from .api._errors import registrar_erros
+from .schemas.common import VERSAO_SCHEMA
 
 
 def create_app() -> FastAPI:
-    settings = get_settings()
-    app = FastAPI(title="adaptai API", version=__version__)
+    app = FastAPI(
+        title="AdaptAI",
+        version=VERSAO_SCHEMA,
+        description="Sistema inteligente de adaptacao e geracao de conteudo educacional.",
+    )
 
-    # CORS restrito à(s) origem(ns) do front-end (RNF-04). O token vai no cabeçalho
-    # Authorization, não em cookie, então não há credenciais cross-site.
-    if settings.cors_origin_list:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.cors_origin_list,
-            allow_methods=["GET", "POST"],
-            allow_headers=["Authorization", "Content-Type"],
-        )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # ajustar via CORS_ORIGINS em config.py
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-    app.include_router(health_router, prefix=API_PREFIX)
+    registrar_erros(app)
+
+    api_prefix = "/api/v1"
+    app.include_router(auth.router, prefix=api_prefix)
+    app.include_router(auth.usuarios_router, prefix=api_prefix)  # Rota do /me
+    app.include_router(documentos.router, prefix=api_prefix)
+    app.include_router(adaptacoes.router, prefix=api_prefix)
+    app.include_router(perfil.router, prefix=api_prefix)
+    app.include_router(teste_nivel.router, prefix=api_prefix)
+    app.include_router(health.router, prefix=api_prefix)
+
     return app
 
 

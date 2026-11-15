@@ -1,0 +1,4 @@
+# Bancos de dados locais
+*.db
+*.sqlite
+*.sqlite3

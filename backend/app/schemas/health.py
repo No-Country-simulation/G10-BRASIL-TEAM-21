@@ -1,8 +1,7 @@
-from typing import Literal
-
 from pydantic import BaseModel
 
 
 class HealthResponse(BaseModel):
-    status: Literal["ok"]
-    versao: str
+    api: str
+    db: str
+    pgvector: str

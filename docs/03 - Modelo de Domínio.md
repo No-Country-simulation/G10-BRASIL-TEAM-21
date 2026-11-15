@@ -1,6 +1,6 @@
 # 03 - Modelo de Domínio
 
-> **Versão:** v2 · **Data:** 2026-10-17
+> **Versão:** v3 · **Data:** 2026-10-25
 > **Relacionados:** [02 - Requisitos](./02%20-%20Requisitos.md) · [05 - Contrato de API](./05%20-%20Contrato%20de%20API.md) · [ADR-0013](./adr/ADR-0013-postgresql-como-banco-de-leitura.md) · [ADR-0014](./adr/ADR-0014-pgvector-como-vector-store.md)
 
 ---
@@ -11,16 +11,16 @@ O domínio gira em torno de quatro ideias: o **usuário** (com sua evolução), 
 
 ```mermaid
 erDiagram
-    USUARIO ||--o{ DOCUMENTO : envia
-    USUARIO ||--o{ ADAPTACAO : solicita
-    USUARIO ||--|| PERFIL_EVOLUCAO : possui
-    USUARIO ||--o{ TESTE_NIVEL : realiza
-    DOCUMENTO ||--o{ CHUNK : "e dividido em"
-    DOCUMENTO ||--o{ ADAPTACAO : "origina"
-    ADAPTACAO ||--o{ EVENTO_XP : "gera"
-    PERFIL_EVOLUCAO ||--o{ CONCEITO_PROGRESSO : acompanha
-    PERFIL_EVOLUCAO ||--o{ EVENTO_XP : acumula
-    TESTE_NIVEL }o--o{ CONCEITO_PROGRESSO : avalia
+     USUARIO ||--o{ DOCUMENTO : envia
+     USUARIO ||--o{ ADAPTACAO : solicita
+     USUARIO ||--|| PERFIL_EVOLUCAO : possui
+     USUARIO ||--o{ TESTE_NIVEL : realiza
+     DOCUMENTO ||--o{ CHUNK : "e dividido em"
+     DOCUMENTO ||--o{ ADAPTACAO : "origina"
+     ADAPTACAO ||--o{ EVENTO_XP : "gera"
+     PERFIL_EVOLUCAO ||--o{ CONCEITO_PROGRESSO : acompanha
+     PERFIL_EVOLUCAO ||--o{ EVENTO_XP : acumula
+     TESTE_NIVEL }o--o{ CONCEITO_PROGRESSO : avalia
 ```
 
 `Analogia` não é uma tabela: as analogias de uma adaptação ficam dentro do JSON da própria adaptação (seção 2).
@@ -61,6 +61,8 @@ erDiagram
 | `status_upload` | enum | `pendente`, `concluido`, `falha` (RN-17) |
 | `hash_conteudo` | texto | SHA-256, evita reindexar duplicatas por usuário |
 | `nivel_documento_estimado` | Nivel (opcional) | Estimado **na ingestão** (RN-18). `null` se o LLM estiver indisponível nesse momento |
+| `dominio_conhecimento` | DominioConhecimento (opcional) | Classificado na ingestão (RN-21) |
+| `classificador_usado` | ClassificadorUsado (opcional) | `local`, `api` ou `fallback` |
 | `criado_em` | datetime | |
 
 ### Chunk
@@ -70,6 +72,7 @@ erDiagram
 | `documento_id` | UUID | |
 | `ordem` | inteiro | Posição no documento |
 | `texto` | texto | |
+| `tsvector_conteudo` | tsvector | Coluna gerada para busca textual, com índice GIN (busca híbrida, RN-22) |
 | `embedding` | vetor(N) | Coluna `pgvector` no banco. N é a dimensão do modelo de embeddings (ADR-0011, ADR-0014) |
 
 ### Adaptacao (pacote educacional)
@@ -77,6 +80,7 @@ erDiagram
 |---|---|---|
 | `adaptacao_id` | UUID | |
 | `usuario_id`, `documento_id` | UUID | |
+| `cache_key` | texto (64) | SHA-256 dos parâmetros da adaptação (RN-20) |
 | `perfil_destinatario` | PerfilSaida | RN-02 |
 | `formato_saida` | FormatoSaida | |
 | `nicho_setor` | Nicho | |
@@ -138,12 +142,16 @@ Um conceito passa a `dominado` quando o usuário acerta o conceito no Teste de N
 
 | Enum | Valores (no JSON, sem acentos) |
 |---|---|
-| `Nivel` | `Iniciante`, `Desenvolvedor Junior`, `Desenvolvedor Pleno`, `Tech Lead`, `Arquiteto` |
+| `Nivel` | `Iniciante`, `Basico`, `Intermediario`, `Avancado`, `Especialista` |
 | `PerfilSaida` | Os 5 níveis acima + `Gestor/Executivo` |
-| `FormatoSaida` | `Tutorial`, `Flashcards`, `Quiz`, `Resumo Executivo`, `Roteiro de Aula` |
-| `Nicho` | `Geral`, `Fintech`, `Saude`, `E-commerce` |
+| `FormatoSaida` | `Tutorial`, `Flashcards`, `Quiz`, `Resumo`, `Roteiro de Aula` |
+| `Nicho` | `Geral`, `Fintech`, `Saude`, `E-commerce`, `Educacao`, `Juridico` |
 | `NivelDetalhe` | `Didatico`, `Intermediario`, `Aprofundado` |
+| `DominioConhecimento` | `Geral`, `TI`, `Medicina`, `Financas`, `Juridico`, `Engenharia`, `Educacao` |
+| `ClassificadorUsado` | `local`, `api`, `fallback` |
 | `StatusUpload` | `pendente`, `concluido`, `falha` |
+
+Os valores de `Nivel` são posições universais na escada de evolução. Armazenamento, XP, limiares e Teste de Nível usam sempre esses valores canônicos. O rótulo de exibição depende de `dominio_conhecimento` e é apenas texto de interface.
 
 ## 4. Máquinas de estado
 
@@ -157,15 +165,15 @@ Um conceito passa a `dominado` quando o usuário acerta o conceito no Teste de N
 
 ## 5. Invariantes
 
-1. `xp_total` nunca diminui.
-2. Um acerto de quiz concede XP **uma única vez** por pergunta e adaptação.
-3. No máximo 3 eventos `geracao_conteudo` pontuam por dia civil (America/Sao_Paulo).
-4. Toda analogia tem `ancorada_na_fonte = false` e ao menos um `conceito_ancorado_em`.
-5. Todo item de conteúdo ancorado tem ao menos um chunk em `fontes_chunks`.
-6. `senha_hash` nunca aparece em respostas da API nem em logs.
-7. O e-mail é único (índice único sobre `lower(email)`).
-8. O resultado de uma adaptação, os eventos de XP e a atualização do perfil são gravados na **mesma transação** (RNF-14).
-9. Toda consulta de chunks é filtrada por `documento_id` de um documento do usuário do token.
+1 . `xp_total` nunca diminui.
+2 . Um acerto de quiz concede XP **uma única vez** por pergunta e adaptação.
+3 . No máximo 3 eventos `geracao_conteudo` pontuam por dia civil (America/Sao_Paulo).
+4 . Toda analogia tem `ancorada_na_fonte = false` e ao menos um `conceito_ancorado_em`.
+5 . Todo item de conteúdo ancorado tem ao menos um chunk em `fontes_chunks`.
+6 . `senha_hash` nunca aparece em respostas da API nem em logs.
+7 . O e-mail é único (índice único sobre `lower(email)`).
+8 . O resultado de uma adaptação, os eventos de XP e a atualização do perfil são gravados na **mesma transação** (RNF-14).
+9 . Toda consulta de chunks é filtrada por `documento_id` de um documento do usuário do token.
 
 ## 6. Layout dos objetos no OCI Object Storage
 
@@ -183,18 +191,22 @@ Um único bucket Always Free (`AdaptAI-conteudos-educativos`). Ele é **arquivo 
 
 ## 7. Esquema do banco (PostgreSQL)
 
-Esquema gerenciado por **migrações Alembic** com **SQLAlchemy 2.x**. A tabela abaixo é o ponto de partida; os tipos exatos saem do spike da semana 1.
+Esquema gerenciado por **migrações Alembic** com **SQLAlchemy 2.x**, que definem o banco de forma versionada.
 
 | Tabela | Colunas principais | Restrições e índices |
 |---|---|---|
 | `usuarios` | `usuario_id` PK, `nome`, `email`, `senha_hash`, `nivel_declarado`, `criado_em` | Único em `lower(email)`; `nivel_declarado` com `CHECK` nos 5 valores |
 | `perfis_evolucao` | `usuario_id` PK e FK, `nivel_atual`, `xp_total`, `atualizado_em` | `xp_total >= 0`. A linha é travada (`SELECT ... FOR UPDATE`) ao aplicar XP |
-| `documentos` | `documento_id` PK, `usuario_id` FK, `titulo`, `formato_origem`, `objeto_oci`, `status_upload`, `hash_conteudo`, `nivel_documento_estimado`, `criado_em` | Único em (`usuario_id`, `hash_conteudo`); índice em (`usuario_id`, `criado_em` desc) |
-| `chunks` | `documento_id` FK, `chunk_id`, `ordem`, `texto`, `embedding vector(N)` | PK (`documento_id`, `chunk_id`); `ON DELETE CASCADE`; índice vetorial só se a medição pedir (ADR-0014) |
-| `adaptacoes` | `adaptacao_id` PK, `usuario_id` FK, `documento_id` FK, parâmetros, `nivel_do_usuario_no_momento`, `resultado` JSONB, `ancoragem_fonte_score`, `objeto_oci`, `status_upload`, `criado_em` | Índice em (`usuario_id`, `criado_em` desc); índice em `documento_id` |
+| `documentos` | `documento_id` PK, `usuario_id` FK, `titulo`, `formato_origem`, `objeto_oci`, `status_upload`, `hash_conteudo`, `nivel_documento_estimado`, `dominio_conhecimento`, `classificador_usado`, `criado_em` | Único em (`usuario_id`, `hash_conteudo`); `CHECK` para `dominio_conhecimento` e `classificador_usado`; índice em (`usuario_id`, `criado_em` desc) |
+| `chunks` | `documento_id` FK, `chunk_id`, `ordem`, `texto`, `tsvector_conteudo`, `embedding vector(N)` | PK (`documento_id`, `chunk_id`); `ON DELETE CASCADE`; índice GIN em `tsvector_conteudo`; índice vetorial conforme ADR-0014 |
+| `adaptacoes` | `adaptacao_id` PK, `usuario_id` FK, `documento_id` FK, parâmetros, `cache_key`, `nivel_do_usuario_no_momento`, `resultado` JSONB, `ancoragem_fonte_score`, `objeto_oci`, `status_upload`, `criado_em` | Índice único parcial em (`usuario_id`, `cache_key`) onde `status_upload = 'concluido'`; índice em (`usuario_id`, `criado_em` desc); índice em `documento_id` |
 | `eventos_xp` | `evento_id` PK, `usuario_id` FK, `adaptacao_id` FK, `tipo`, `xp`, `item_indice`, `criado_em` | Índice único parcial em (`adaptacao_id`, `item_indice`) para `tipo = 'acerto_quiz'` (XP uma vez por pergunta) |
 | `conceitos_progresso` | `usuario_id` FK, `conceito`, `nivel_origem`, `estado`, `acertos_quiz` | PK (`usuario_id`, `conceito`) |
 | `testes_nivel` | `teste_id` PK, `usuario_id` FK, `nivel_avaliado`, `perguntas` JSONB, `respostas` JSONB, `percentual_dominio`, `aprovado`, `tentativa`, `criado_em` | Índice em (`usuario_id`, `criado_em` desc) |
+
+
+**Migrações:** a migração `0001` cria o esquema sem `chunks.embedding`; a migração `0002` adiciona `embedding vector(N)` quando o ADR-0011 definir a dimensão `N`.
+
 
 **Regras de acesso:** o repositório nunca lê por id sozinho: sempre `id` **e** `usuario_id` do token, o que garante o 404 para recursos de outro usuário.
 
