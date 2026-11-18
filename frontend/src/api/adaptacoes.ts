@@ -3,7 +3,12 @@ import { configuracao, type ConfiguracaoApi } from './configuracao'
 import { ErroApi } from './erros'
 import type { OpcoesMock } from './mock'
 import { obterTokenAcesso } from './sessao'
-import type { Adaptacao, AdaptacaoRequest, AdaptacoesListResponse, UploadDocumentoResponse } from './tipos'
+import type {
+  Adaptacao,
+  AdaptacaoRequest,
+  AdaptacoesListResponse,
+  UploadDocumentoResponse,
+} from './tipos'
 
 export function criarApiAdaptacoes(
   config: ConfiguracaoApi,
@@ -22,12 +27,13 @@ export function criarApiAdaptacoes(
   }
 
   return {
-    async listar(limite = 5, deslocamento = 0, signal?: AbortSignal,): Promise<AdaptacoesListResponse> {
+    async listar(
+      limite = 5,
+      deslocamento = 0,
+      signal?: AbortSignal,
+    ): Promise<AdaptacoesListResponse> {
       if (config.usarMock) {
-        return {
-          itens: [],
-          total: 0,
-        }
+        return { itens: [], total: 0 }
       }
 
       const parametros = new URLSearchParams({
@@ -42,7 +48,7 @@ export function criarApiAdaptacoes(
         ),
       )
     },
-    
+
     async obter(
       id: string,
       signal?: AbortSignal,
@@ -69,13 +75,16 @@ export function criarApiAdaptacoes(
         ),
       )
     },
+
     async gerar(
       payload: AdaptacaoRequest,
       signal?: AbortSignal,
     ): Promise<Adaptacao> {
       if (config.usarMock) {
-        if (payload.formato_saida !== 'Flashcards')
+        if (payload.formato_saida !== 'Flashcards') {
           throw new ErroApi('NAO_IMPLEMENTADO', 501)
+        }
+
         const { obterMock } = await import('./mock')
         recente = await obterMock({}, signal)
       } else {
@@ -87,9 +96,13 @@ export function criarApiAdaptacoes(
           }),
         )
       }
+
       return recente
     },
-    async enviarDocumento(arquivo: File,): Promise<UploadDocumentoResponse> {
+
+    async enviarDocumento(
+      arquivo: File,
+    ): Promise<UploadDocumentoResponse> {
       if (config.usarMock) {
         throw new ErroApi('NAO_IMPLEMENTADO', 501)
       }
