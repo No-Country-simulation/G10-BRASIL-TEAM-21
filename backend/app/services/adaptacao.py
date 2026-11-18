@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import uuid
 from typing import Any
 
@@ -35,6 +36,7 @@ from . import xp
 # Doc 04: documentos de até ~12 chunks vão inteiros para o contexto; acima disso, busca top-k.
 MAX_CHUNKS_CONTEXTO = 12
 TOP_K = 6
+logger = logging.getLogger(__name__)
 
 
 def _enum_ou_none(tipo, valor):
@@ -146,18 +148,14 @@ def _gerar_cache_key(
 def _resposta_do_cache(
     adaptacao: Adaptacao, request_id: str, incluir_gabarito: bool
 ) -> AdaptacaoResponse:
-    """Reconstitui o JSONB e aplica os dados atuais da adaptação."""
-    dados = dict(adaptacao.resultado or {})
-
-    dados["adaptacao_id"] = str(adaptacao.adaptacao_id)
-
-    resposta = AdaptacaoResponse.model_validate(dados).model_copy(
+    """Reconstitui o JSONB e aplica o request_id e a política do gabarito atuais."""
+    resposta = AdaptacaoResponse.model_validate(adaptacao.resultado).model_copy(
         update={
             "request_id": request_id,
             "cache_hit": True,
+            "adaptacao_id": str(adaptacao.adaptacao_id),
         }
     )
-
     return resposta if incluir_gabarito else ocultar_gabarito(resposta)
 
 
@@ -211,6 +209,11 @@ def gerar_adaptacao(
     try:
         resultado = executar_cadeia(cadeia, sistema, usuario_prompt, schema)
     except AgenteFalhouError as exc:
+        logger.error(
+            "Geração LLM falhou: request_id=%s falhas=%s",
+            request_id,
+            exc.falhas,
+        )
         if exc.so_saida_invalida:
             raise ErroApi(
                 422, "VALIDACAO_FALHOU", "A IA não gerou um conteúdo válido. Tente novamente."

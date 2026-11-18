@@ -4,7 +4,12 @@ import logging
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError
-from tenacity import retry, retry_if_exception_type, stop_after_attempt
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 from ..ports.llm import (
     LLMConfigError,
@@ -18,6 +23,34 @@ logger = logging.getLogger(__name__)
 
 # 1 chamada + 1 nova tentativa quando o JSON vem fora do schema (RNF-06).
 TENTATIVAS_VALIDACAO = 2
+TENTATIVAS_PROVEDOR = 3
+
+
+def _gerar_json_com_retry(
+    provedor: LLMProvider, sistema: str, usuario: str, schema: type[BaseModel]
+) -> str:
+    """Repete apenas falhas transitórias antes de avançar para o próximo provedor."""
+
+    def registrar_espera(retry_state) -> None:
+        logger.warning(
+            "LLM retry agendado: provider=%s model=%s tentativa=%d espera_s=%.2f",
+            provedor.nome,
+            provedor.modelo,
+            retry_state.attempt_number + 1,
+            retry_state.next_action.sleep if retry_state.next_action else 0,
+        )
+
+    @retry(
+        retry=retry_if_exception_type(LLMIndisponivelError),
+        stop=stop_after_attempt(TENTATIVAS_PROVEDOR),
+        wait=wait_random_exponential(multiplier=1, min=1, max=4),
+        before_sleep=registrar_espera,
+        reraise=True,
+    )
+    def tentativa() -> str:
+        return provedor.gerar_json(sistema, usuario, schema)
+
+    return tentativa()
 
 
 class AgenteFalhouError(LLMError):
@@ -55,7 +88,7 @@ def _chamar_e_validar(
                 "\n\nA resposta anterior não passou na validação. Corrija e responda só o JSON. "
                 f"Erro: {dica['erro']}"
             )
-        texto = provedor.gerar_json(sistema, prompt, schema)
+        texto = _gerar_json_com_retry(provedor, sistema, prompt, schema)
         try:
             return schema.model_validate_json(texto)
         except ValidationError as exc:
