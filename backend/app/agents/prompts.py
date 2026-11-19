@@ -107,7 +107,7 @@ def montar_sistema(
         "Você DEVE retornar APENAS um objeto JSON válido.\n"
         "NÃO use blocos de código markdown (como ```json e ```).\n"
         "NÃO escreva nenhuma palavra, saudação ou explicação antes ou depois do JSON.\n"
-        "Sua resposta deve começar com {{ e terminar com }}.\n\n"
+        "Retorne um único objeto, começando com { e terminando com }.\n\n"
         "O JSON deve seguir EXATAMENTE este schema:\n"
         f"{schema_json}\n"
     )
