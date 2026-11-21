@@ -43,38 +43,14 @@ function abrir(url: string) {
 }
 
 describe('resultado do contrato', () => {
-  it('gera a demonstração pelo formulário e navega até o pacote recebido', async () => {
+  it('apresenta o fluxo atual de envio de arquivo e geração separada', () => {
     abrir('/upload')
 
-    fireEvent.change(
-      screen.getByLabelText(textos.upload.tituloDocumento),
-      { target: { value: 'Documento de teste' } },
-    )
-
-    fireEvent.change(
-      screen.getByLabelText(textos.upload.conteudo),
-      { target: { value: 'Texto para adaptar' } },
-    )
-
-    fireEvent.click(
-      screen.getByRole('button', { name: textos.upload.gerar }),
-    )
-
+    expect(screen.getByLabelText(textos.upload.arquivo)).toBeTruthy()
     expect(
-      screen
-        .getByRole('button', { name: textos.estados.carregando })
-        .hasAttribute('disabled'),
-    ).toBe(true)
-
-    await screen.findByRole('heading', {
-      name: 'Dominando Redes na Nuvem (VCN) do Zero',
-    })
-
-    expect(
-      screen.getByRole('heading', {
-        name: textos.resultado.qualidade,
-      }),
+      screen.getByRole('link', { name: textos.upload.irParaAdaptacoes }),
     ).toBeTruthy()
+    expect(screen.queryByLabelText(textos.upload.tituloDocumento)).toBeNull()
   })
 
   it('exibe todos os blocos do exemplo completo', () => {
