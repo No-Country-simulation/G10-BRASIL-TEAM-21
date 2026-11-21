@@ -11,6 +11,7 @@ import './App.css'
 import RotaProtegida from './components/auth/RotaProtegida'
 import Layout from './components/layout/Layout'
 import TesteNivel from './pages/TesteNivel.tsx'
+import Adaptacoes from './pages/Adapatcoes'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/painel" element={<Painel />} />
           <Route path="/upload" element={<Upload />} />
+          <Route path="/adaptacoes" element={<Adaptacoes />} />
           <Route path="/resultado/:id" element={<Resultado />} />
           <Route path="/historico" element={<Historico />} />
           <Route path="/perfil" element={<Perfil />} />

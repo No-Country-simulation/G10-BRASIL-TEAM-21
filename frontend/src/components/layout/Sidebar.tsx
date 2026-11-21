@@ -13,6 +13,7 @@ interface SidebarProps {
 const itens = [
   { to: '/painel', icone: 'bi-grid-1x2', rotulo: textos.navegacao.painel },
   { to: '/upload', icone: 'bi-plus-lg', rotulo: textos.navegacao.upload },
+  { to: '/adaptacoes', icone: 'bi-magic', rotulo: textos.navegacao.adaptacoes },
   { to: '/historico', icone: 'bi-clock-history', rotulo: textos.navegacao.historico },
   { to: '/perfil', icone: 'bi-person', rotulo: textos.navegacao.perfil },
 ]

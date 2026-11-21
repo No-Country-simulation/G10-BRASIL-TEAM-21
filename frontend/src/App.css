@@ -44,6 +44,46 @@
   border-radius: 8px;
 }
 
+.pagina input.seletor-arquivo {
+  width: 100%;
+  min-height: 48px;
+  padding: 6px;
+  color: var(--app-text-secondary);
+  background: var(--app-page-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
+
+.pagina input.seletor-arquivo::file-selector-button {
+  min-height: 34px;
+  margin-right: 12px;
+  padding: 7px 14px;
+  color: var(--app-primary);
+  background: color-mix(in srgb, var(--app-primary) 9%, var(--app-card-bg));
+  border: 1px solid color-mix(in srgb, var(--app-primary) 28%, var(--app-border));
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pagina input.seletor-arquivo::file-selector-button:hover {
+  background: color-mix(in srgb, var(--app-primary) 15%, var(--app-card-bg));
+}
+
+.pagina .link-gerar-adaptacao {
+  align-self: flex-start;
+  color: var(--app-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pagina .link-gerar-adaptacao:hover {
+  color: var(--app-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .pagina input[type='checkbox'] {
   margin-right: 8px;
 }

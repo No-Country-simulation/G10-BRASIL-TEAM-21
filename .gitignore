@@ -38,8 +38,10 @@ coverage/
 !.vscode/extensions.json
 .DS_Store
 Thumbs.db
+*.ps1
 
 # Bancos de dados locais
 *.db
 *.sqlite
 *.sqlite3
+
